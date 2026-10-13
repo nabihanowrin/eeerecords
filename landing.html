@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Department of EEE — University of Chittagong</title>
+<style>
+:root{
+  --ink:#1E2A32; --ink-2:#2B3A44; --cream:#F6F2EE; --card:#fff;
+  --text:#1C1A19; --grey:#6E6764; --line:#E4DCD6;
+  --accent:#7E2233; --accent-wash:#F4E8EA;
+  --butter:#F2EBC6; --mist:#D3E4E8; --clay:#E7DFDB; --sage:#DCE6D8;
+  --sans:Arial,Helvetica,sans-serif; --serif:Arial,Helvetica,sans-serif; --mono:Arial,Helvetica,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--text);font-family:var(--sans)}
+button,input,select{font-family:inherit}
+.wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+.eyebrow{font-size:12.5px;letter-spacing:.08em;color:var(--grey)}
+
+/* the slide-up, slow enough to see */
+.rise{opacity:0;transform:translateY(60px);transition:opacity 1s cubic-bezier(.16,.84,.34,1),transform 1s cubic-bezier(.16,.84,.34,1)}
+.rise.seen{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+@media (prefers-reduced-motion:reduce){.rise{opacity:1;transform:none;transition:none}}
+
+/* ---------------- nav ---------------- */
+.nav{position:sticky;top:0;z-index:40;background:var(--ink);color:#fff}
+.nav .wrap{display:flex;align-items:center;gap:26px;height:66px}
+.nav img{height:34px;width:auto}
+.nav .mark{font-family:var(--serif);font-weight:600;font-size:21px}
+.nav .links{margin-left:auto;display:flex;gap:24px;align-items:center}
+.nav a{color:#AEBBC4;text-decoration:none;font-size:14px}
+.nav a:hover{color:#fff}
+.nav a.cta{background:var(--accent);color:#fff;padding:9px 18px;border-radius:30px}
+
+/* ---------------- hero ---------------- */
+.hero{padding:80px 0 60px}
+.hero h1{font-weight:700;font-size:clamp(44px,7.5vw,96px);line-height:.95;letter-spacing:-.035em;text-transform:uppercase;margin-top:18px}
+.hero h1 em{font-family:var(--serif);font-weight:600;font-style:italic;text-transform:none;font-weight:400;letter-spacing:-.01em}
+.hero .lede{margin-top:22px;font-size:17px;line-height:1.6;color:var(--grey);max-width:56ch}
+.frame{margin-top:44px;border-radius:26px;overflow:hidden;background:var(--ink);display:grid;grid-template-columns:1fr 1fr;min-height:400px}
+.frame .copy{padding:44px 40px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end}
+.frame .copy h2{font-family:var(--serif);font-weight:600;font-size:42px;line-height:1.05;font-weight:400}
+.frame .copy p{margin-top:14px;font-size:14.5px;color:#AEBBC4;max-width:38ch;line-height:1.6}
+.frame .pic{background:var(--ink-2)}
+.frame .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.btn{display:inline-block;border:none;border-radius:30px;padding:14px 28px;font-size:15px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;text-decoration:none}
+.btn.ghost{background:transparent;color:#fff;border:1px solid #4A5B66}
+.btn.line{background:transparent;color:var(--text);border:1px solid var(--line)}
+.frame .copy .row{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+
+/* ---------------- counters ---------------- */
+.facts{background:var(--card);padding:64px 0;margin-top:70px}
+.facts .row{display:grid;grid-template-columns:repeat(4,1fr)}
+.facts .cell{padding:0 28px;border-left:1px solid var(--line)}
+.facts .cell:first-child{border-left:none;padding-left:0}
+.facts .big{font-family:var(--serif);font-weight:600;font-size:62px;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+.facts .big.pending{font-size:22px;color:#B3A9A3;font-family:var(--sans);font-style:italic;line-height:62px}
+.facts .lbl{font-size:17px;font-weight:600;margin-top:8px}
+.facts p{margin-top:6px;font-size:13.5px;line-height:1.55;color:var(--grey);max-width:30ch}
+
+/* ---------------- achievements: a sideways slider ---------------- */
+.ach-wrap{padding:90px 0 70px}
+.ach-head{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.ach-head h2{font-family:var(--serif);font-weight:600;font-size:52px;font-weight:400;line-height:1.02;max-width:14ch}
+.ach-head p{color:var(--grey);font-size:14.5px;line-height:1.6;max-width:44ch}
+.ach-head .arrows{margin-left:auto;display:flex;gap:10px}
+.arrow{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:20px;cursor:pointer;transition:background .2s ease,color .2s ease}
+.arrow:hover{background:var(--ink);color:#fff}
+.slider{display:flex;gap:26px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
+  padding:34px 32px 26px;margin:0 -32px;cursor:grab;scrollbar-width:none}
+.slider::-webkit-scrollbar{display:none}
+.slider.drag{cursor:grabbing;scroll-snap-type:none;scroll-behavior:auto}
+.slide{flex:0 0 min(520px,82vw);scroll-snap-align:start;background:#E9E6E3;border-radius:4px;overflow:hidden;user-select:none;display:flex;flex-direction:column}
+.slide .pic{aspect-ratio:3/2;background:var(--ink);display:flex;align-items:flex-end;padding:26px;position:relative;overflow:hidden}
+.slide .pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.slide .pic .yr{position:relative;font-family:var(--serif);font-weight:600;font-size:84px;line-height:.8;color:rgba(255,255,255,.14)}
+.slide:nth-child(4n+2) .pic{background:#3B4A3F}
+.slide:nth-child(4n+3) .pic{background:#5A2A33}
+.slide:nth-child(4n+4) .pic{background:#46505A}
+.slide .body{padding:28px 30px 32px;flex:1}
+.slide h3{font-family:var(--serif);font-weight:600;font-size:32px;font-weight:400;line-height:1.1}
+.slide p{font-size:15px;line-height:1.6;color:#4E4845;margin-top:12px}
+.track{height:3px;background:var(--line);border-radius:2px;margin-top:6px;position:relative;overflow:hidden}
+.track i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:2px;width:20%;transition:transform .15s linear}
+
+/* ---------------- drifting columns ---------------- */
+.drift{padding:90px 0}
+.drift .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;align-items:start}
+.drift .intro h2{font-family:var(--serif);font-weight:600;font-size:48px;font-weight:400;line-height:1.05}
+.drift .intro p{color:var(--grey);font-size:14.5px;line-height:1.6;margin-top:14px}
+.col{height:520px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(transparent,#000 12%,#000 88%,transparent);
+          mask-image:linear-gradient(transparent,#000 12%,#000 88%,transparent)}
+.strip{display:flex;flex-direction:column;gap:18px}
+.up{animation:up 34s linear infinite}
+.down{animation:down 34s linear infinite}
+@keyframes up{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@keyframes down{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+.col:hover .strip{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.up,.down{animation:none}}
+
+.ach{border-radius:20px;padding:24px 22px;min-height:180px;display:flex;flex-direction:column;justify-content:space-between}
+.ach:nth-child(4n+1){background:var(--butter)}
+.ach:nth-child(4n+2){background:var(--mist)}
+.ach:nth-child(4n+3){background:var(--clay)}
+.ach:nth-child(4n+4){background:var(--sage)}
+.ach h3{font-size:18px;font-weight:600;line-height:1.3}
+.ach p{font-size:13.5px;color:#4E4845;margin-top:8px;line-height:1.5}
+.ach .yr{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--grey);margin-top:16px}
+
+.shot{border-radius:20px;overflow:hidden;background:var(--ink-2)}
+.shot img{width:100%;display:block;aspect-ratio:4/3;object-fit:cover}
+.shot .cap{padding:10px 14px;font-size:12.5px;color:#AEBBC4}
+
+.dark{background:var(--ink)}
+.dark .intro h2{color:#fff}
+.dark .intro p{color:#AEBBC4}
+
+/* ---------------- quote band ---------------- */
+.quote{padding:100px 0;background:var(--accent);color:#fff}
+.quote h2{font-size:clamp(30px,4.6vw,58px);font-weight:700;line-height:1.05;letter-spacing:-.03em;text-transform:uppercase;max-width:20ch}
+.quote p{margin-top:20px;color:#EBC8CF;font-size:15px;max-width:52ch;line-height:1.6}
+
+/* ---------------- sign in ---------------- */
+.enter{padding:100px 0}
+.enter h2{font-family:var(--serif);font-weight:600;font-size:48px;font-weight:400}
+.enter .lede{color:var(--grey);margin-top:8px;font-size:15px}
+.gatebox{display:grid;grid-template-columns:260px 1fr;gap:0;margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:24px;overflow:hidden;min-height:430px}
+.roles{background:var(--ink);padding:26px 0 26px 16px;display:flex;flex-direction:column;gap:6px}
+.roles button{position:relative;text-align:left;border:none;background:none;color:#AEBBC4;font-size:15px;padding:13px 18px;border-radius:22px 0 0 22px;cursor:pointer}
+.roles button:hover{color:#fff}
+.roles button.on{background:var(--card);color:var(--text);font-weight:600}
+.roles button.on::before,.roles button.on::after{content:"";position:absolute;right:0;width:22px;height:22px;background:transparent;pointer-events:none}
+.roles button.on::before{top:-22px;border-bottom-right-radius:22px;box-shadow:8px 8px 0 8px var(--card)}
+.roles button.on::after{bottom:-22px;border-top-right-radius:22px;box-shadow:8px -8px 0 8px var(--card)}
+.panel{padding:34px 38px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.tabs button{background:none;border:none;padding:10px 14px;font-size:14.5px;color:var(--grey);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--text);font-weight:600;border-bottom-color:var(--accent)}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.field input,.field select{width:100%;max-width:420px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;font-size:14.5px;background:var(--cream)}
+.field input:focus,.field select:focus{outline:2px solid var(--accent)}
+.field .hint{font-size:12px;color:var(--grey);margin-top:5px}
+.check{display:flex;gap:9px;align-items:center;font-size:14px;margin:6px 0 18px}
+.check input{width:17px;height:17px;accent-color:var(--accent)}
+.msg{font-size:13.5px;min-height:20px;margin-top:12px;color:var(--accent)}
+.msg.ok{color:#3F6A52}
+.steps{display:flex;gap:8px;margin-bottom:18px}
+.steps span{font-size:12px;padding:4px 11px;border-radius:20px;background:var(--cream);color:var(--grey)}
+.steps span.on{background:var(--accent-wash);color:var(--accent);font-weight:600}
+.back{background:none;border:none;color:var(--grey);font-size:13px;cursor:pointer;text-decoration:underline;margin-left:14px}
+
+/* ---------------- footer ---------------- */
+footer{background:var(--ink);color:#AEBBC4;padding:70px 0 40px}
+footer .cols{display:grid;grid-template-columns:1.1fr 1fr 1.5fr;gap:40px}
+footer h3{color:#fff;font-size:15px;font-weight:600;margin-bottom:14px}
+footer p,footer li{font-size:14px;line-height:1.8}
+footer ul{list-style:none}
+footer a{color:#AEBBC4}
+footer a:hover{color:#fff}
+.todo{color:#6F8290;font-style:italic}
+details{border-top:1px solid #33434E;padding:12px 0}
+details:last-child{border-bottom:1px solid #33434E}
+summary{cursor:pointer;color:#fff;font-size:14.5px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:#AEBBC4;font-size:18px;line-height:1}
+details[open] summary::after{content:"–"}
+details p{margin-top:8px;font-size:13.5px;line-height:1.6}
+.legal{margin-top:50px;padding-top:22px;border-top:1px solid #33434E;font-size:12.5px;color:#6F8290}
+
+.hide{display:none}
+@media (max-width:900px){
+  .frame,.drift .grid,footer .cols{grid-template-columns:1fr}
+  .facts .row{grid-template-columns:1fr 1fr;gap:26px 0}
+  .facts .cell:nth-child(3){border-left:none;padding-left:0}
+  .facts .cell{border-left:none;padding:20px 0;border-top:1px solid var(--line)}
+  .gatebox{grid-template-columns:1fr}
+  .roles{flex-direction:row;padding:14px}
+  .roles button{border-radius:22px}
+  .roles button.on::before,.roles button.on::after{display:none}
+  .nav .links a:not(.cta){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <img src="photos/logo.webp" alt="" onerror="this.remove()">
+    <span class="mark">EEE · Chittagong</span>
+    <div class="links">
+      <a href="#news">Achievements</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#faq">Questions</a>
+      <a class="cta" href="#enter" id="navCta">Sign in</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="wrap hero">
+  <p class="eyebrow rise">UNIVERSITY OF CHITTAGONG · FACULTY OF ENGINEERING</p>
+  <h1 class="rise d1">Electrical and<br>Electronic<br><em>Engineering</em></h1>
+  <p class="lede rise d2">Results, attendance and records for the department — kept so that every mark carries its own history, and nothing changes quietly.</p>
+
+  <div class="frame rise d3">
+    <div class="copy">
+      <h2>Your result is a record, not a rumour.</h2>
+      <p>Signed in, a student sees every mark they have been given and every change ever made to it.</p>
+      <div class="row">
+        <a class="btn" href="#enter">Sign in</a>
+        <a class="btn ghost" href="#enter" onclick="openRegister()">First time here</a>
+      </div>
+    </div>
+    <div class="pic"><img src="photos/building.webp" alt="Faculty of Engineering, University of Chittagong" onerror="this.remove()"></div>
+  </div>
+</header>
+
+<section class="facts">
+  <div class="wrap row" id="stats"></div>
+</section>
+
+<!-- ================= ACHIEVEMENTS ================= -->
+<section class="ach-wrap" id="news">
+  <div class="wrap">
+    <div class="ach-head rise">
+      <h2>What the department has been doing</h2>
+      <p>Written by the academic office. When something new happens, it appears here the same day — the page doesn't need to be rebuilt.</p>
+      <div class="arrows">
+        <button class="arrow" aria-label="Previous" onclick="slideBy(-1)">←</button>
+        <button class="arrow" aria-label="Next" onclick="slideBy(1)">→</button>
+      </div>
+    </div>
+    <div class="slider rise d1" id="slider"></div>
+    <div class="track"><i id="thumb"></i></div>
+  </div>
+</section>
+
+<!-- ================= GALLERY ================= -->
+<section class="drift dark" id="gallery">
+  <div class="wrap grid">
+    <div class="intro rise">
+      <h2>Around the department</h2>
+      <p>Labs, classrooms and the people in them. Hover to stop the movement.</p>
+    </div>
+    <div class="col rise d1"><div class="strip down" id="galA"></div></div>
+    <div class="col rise d2"><div class="strip up" id="galB"></div></div>
+  </div>
+</section>
+
+<section class="quote">
+  <div class="wrap">
+    <h2 class="rise">A mark you cannot check is a mark you have to trust.</h2>
+    <p class="rise d1">Every entry carries a fingerprint of the one before it. Change a record outside the system and the ones after it stop matching, so the change shows itself.</p>
+  </div>
+</section>
+
+<!-- ================= SIGN IN ================= -->
+<section class="wrap enter" id="enter">
+  <h2 class="rise">Sign in</h2>
+  <p class="lede rise d1">Use your university email. Your password here is separate from your email password — this site never asks for that one.</p>
+
+  <div class="gatebox rise d2">
+    <div class="roles">
+      <button class="on" onclick="pickRole('student',this)">Student</button>
+      <button onclick="pickRole('teacher',this)">Teacher</button>
+      <button onclick="pickRole('admin',this)">Admin</button>
+    </div>
+
+    <div class="panel">
+      <!-- already signed in -->
+      <div id="already" class="hide">
+        <p style="font-size:16px">You're signed in as <b id="alreadyWho"></b>.</p>
+        <div style="margin-top:20px"><a class="btn" href="app.html">Continue</a><button class="back" onclick="freeThisTab()">Use this tab for another sign-in</button><button class="back" onclick="signOutHere()">Not you? Sign out</button></div>
+        <p style="color:var(--grey);margin-top:14px;font-size:13px;line-height:1.55;max-width:52ch">Signing out ends this ticket everywhere it was opened. Freeing the tab only lets go of it here.</p>
+      </div>
+
+      <!-- signed in, choose where to open it -->
+      <div id="handoff" class="hide"></div>
+
+      <!-- student -->
+      <div id="studentPane">
+        <div class="tabs">
+          <button class="on" id="tabIn" onclick="studentTab('in')">Sign in</button>
+          <button id="tabReg" onclick="studentTab('reg')">First time? Register</button>
+        </div>
+
+        <div id="paneIn">
+          <div class="field"><label for="inEmail">University email</label>
+            <input id="inEmail" type="email" placeholder="roll@std.cu.ac.bd" autocomplete="username"></div>
+          <div class="field"><label for="inPw">Password</label>
+            <input id="inPw" type="password" autocomplete="current-password"></div>
+          <label class="check"><input type="checkbox" id="inRemember" checked> Remember me on this browser</label>
+          <button class="btn" onclick="signIn()">Sign in</button>
+          <div class="msg" id="inMsg"></div>
+        </div>
+
+        <div id="paneReg" class="hide">
+          <div class="steps"><span id="s1" class="on">1 · About you</span><span id="s2">2 · Code and password</span></div>
+
+          <div id="reg1">
+            <div class="field"><label for="rEmail">University email</label>
+              <input id="rEmail" type="email" placeholder="roll@std.cu.ac.bd"></div>
+            <div class="field"><label for="rName">Your full name</label>
+              <input id="rName" autocomplete="name"></div>
+            <div class="field"><label for="rBatch">Your batch</label>
+              <select id="rBatch"><option value="">Choose your batch</option></select>
+              <div class="hint">Your semester and courses are filled in from your batch.</div></div>
+            <div class="field"><label for="rFa">Father's name</label>
+              <input id="rFa"><div class="hint">In English or Bangla. If the office already has your parents' names, these are checked against them; if not, they are saved to your record.</div></div>
+            <div class="field"><label for="rMo">Mother's name</label>
+              <input id="rMo"></div>
+            <button class="btn" onclick="regStart()">Send me a code</button>
+            <div class="msg" id="r1Msg"></div>
+          </div>
+
+          <div id="reg2" class="hide">
+            <p style="font-size:14px;color:var(--grey);margin-bottom:16px">A 6-digit code is on its way to <b id="rSent"></b>. <span id="rWhere"></span></p>
+            <div class="field"><label for="rCode">Code</label>
+              <input id="rCode" inputmode="numeric" maxlength="6" style="max-width:180px;font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:.2em"></div>
+            <div class="field"><label for="rPw">Choose a password for this site</label>
+              <input id="rPw" type="password" autocomplete="new-password"><div class="hint">At least 8 characters. Not your email password.</div></div>
+            <div class="field"><label for="rPw2">Type it again</label>
+              <input id="rPw2" type="password" autocomplete="new-password"></div>
+            <label class="check"><input type="checkbox" id="rRemember" checked> Remember me on this browser</label>
+            <button class="btn" onclick="regFinish()">Create my account</button>
+            <button class="back" onclick="regBack()">Start again</button>
+            <div class="msg" id="r2Msg"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- admin: the office and the examiners -->
+      <div id="adminPane" class="hide">
+        <p style="color:var(--grey);font-size:14.5px;margin-bottom:18px">For the academic office and for examiners. Use your <b>@cu.ac.bd</b> staff email — you land on your own screen.</p>
+        <div class="field"><label for="adEmail">Staff email</label>
+          <input id="adEmail" type="email" placeholder="name@cu.ac.bd" autocomplete="username"></div>
+        <div class="field"><label for="adPw">Password</label>
+          <input id="adPw" type="password" autocomplete="current-password"></div>
+        <label class="check"><input type="checkbox" id="adRemember" checked> Remember me on this browser</label>
+        <button class="btn" onclick="staffSignIn('admin')">Sign in</button>
+        <div class="msg" id="adMsg"></div>
+      </div>
+
+      <!-- teacher -->
+      <div id="teacherPane" class="hide">
+        <p style="color:var(--grey);font-size:14.5px;margin-bottom:18px">For course teachers: attendance, class tests and objections. Use your <b>@cu.ac.bd</b> staff email. The office decides which classes you can open.</p>
+        <div class="field"><label for="tcEmail">Staff email</label>
+          <input id="tcEmail" type="email" placeholder="name@cu.ac.bd" autocomplete="username"></div>
+        <div class="field"><label for="tcPw">Password</label>
+          <input id="tcPw" type="password" autocomplete="current-password"></div>
+        <label class="check"><input type="checkbox" id="tcRemember" checked> Remember me on this browser</label>
+        <button class="btn" onclick="staffSignIn('teacher')">Sign in</button>
+        <div class="msg" id="tcMsg"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>Contact us</h3>
+        <p>Department of Electrical and Electronic Engineering<br>Faculty of Engineering<br>University of Chittagong<br>Chittagong-4331, Bangladesh</p>
+        <p style="margin-top:14px">
+          Email: <a href="mailto:chairman.eee@cu.ac.bd">chairman.eee@cu.ac.bd</a><br>
+          Phone: 88-031-2606001-10, 726311-14, 2606015-27<br>
+          Extension: 4392<br>
+          Fax: 88-031-2606014, 2606145<br>
+          Website: <a href="https://cu.ac.bd/eee/" target="_blank" rel="noopener">cu.ac.bd/eee</a></p>
+      </div>
+      <div>
+        <h3>Links</h3>
+        <ul>
+          <li><a href="https://cu.ac.bd" target="_blank" rel="noopener">University of Chittagong</a></li>
+          <li><a href="https://cu.ac.bd/eee/" target="_blank" rel="noopener">Department page on cu.ac.bd</a></li>
+          <li><a href="#enter">Sign in</a></li>
+          <li><a href="#enter" onclick="openRegister()">Register</a></li>
+        </ul>
+      </div>
+      <div id="faq">
+        <h3>Questions</h3>
+        <details><summary>How do I see my marks?</summary>
+          <p>Register once with your university email, then sign in. Your home page shows every semester; open one to see each course, its class tests and your attendance.</p></details>
+        <details><summary>What if a mark looks wrong?</summary>
+          <p>Open that mark's history and raise an objection. Your teacher and the office are emailed, and the objection stays in the mark's history permanently — even after it is answered.</p></details>
+        <details><summary>Who can see my marks?</summary>
+          <p>You, the teacher of that course, and the academic office. Other students can't, and teachers can't see courses they don't teach.</p></details>
+        <details><summary>How is my CATM worked out?</summary>
+          <p>For a 3-credit theory course it is 21 marks: 7.5 for attendance on the department's fixed scale, and 13.5 from your best class tests — the best 3 of 4 for a 3-credit course.</p></details>
+        <details><summary>Why does it ask for my parents' names?</summary>
+          <p>To check you are the person the roll number belongs to. They're compared with the office's own record, in English or Bangla, and never shown to anyone else.</p></details>
+        <details><summary>I forgot my password.</summary>
+          <p>Password reset isn't built yet. For now, ask the academic office.</p></details>
+      </div>
+    </div>
+    <div class="legal">Prototype. Marks, attendance and achievements shown here are sample data, not real records.</div>
+  </div>
+</footer>
+
+<script>
+const KEY = 'eee_token';
+const token = () => sessionStorage.getItem(KEY) || localStorage.getItem(KEY);   // this tab's own sign-in wins
+
+/* ---------- slide up on scroll ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) e.target.classList.add('seen');
+}), {threshold: 0.15});
+document.querySelectorAll('.rise').forEach(el => io.observe(el));
+
+/* ---------- achievements and gallery, from the office's tables ---------- */
+function esc(t){ const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; }
+
+function fill(list, render, a, b){
+  if (!list.length) return;
+  let pool = list.slice();
+  while (pool.length < 6) pool = pool.concat(list);        // enough to keep moving
+  const other = pool.slice(1).concat(pool.slice(0,1));     // shifted so the columns differ
+  document.getElementById(a).innerHTML = pool.concat(pool).map(render).join('');
+  document.getElementById(b).innerHTML = other.concat(other).map(render).join('');
+}
+
+fetch('/api/landing').then(r => r.json()).then(d => {
+  drawStats(d.stats);
+  drawSlides(d.achievements);
+  const sel = document.getElementById('rBatch');
+  (d.batches || []).forEach(b => {
+    const o = document.createElement('option');
+    o.value = b.name;
+    o.textContent = `${b.name} (${ordinal(b.semester)} semester)`;
+    sel.appendChild(o);
+  });
+  fill(d.gallery, x => `<figure class="shot"><img src="${x.image}" alt="" loading="lazy">${x.caption ? `<figcaption class="cap">${esc(x.caption)}</figcaption>` : ''}</figure>`, 'galA', 'galB');
+});
+
+/* ---------- counters: 0 up to the number, fast, when they come into view ---------- */
+function drawStats(stats){
+  document.getElementById('stats').innerHTML = stats.map((s, i) => `
+    <div class="cell rise d${Math.min(i,3)}">
+      ${s.value === null
+        ? '<div class="big pending">to be added</div>'
+        : `<div class="big" data-to="${s.value}">0</div>`}
+      <div class="lbl">${esc(s.label)}</div>
+      <p>${esc(s.note)}</p>
+    </div>`).join('');
+
+  const seen = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    seen.unobserve(e.target);
+    e.target.closest('.cell').classList.add('seen');
+    countUp(e.target);
+  }), {threshold: 0.6});
+  document.querySelectorAll('#stats .big[data-to]').forEach(el => seen.observe(el));
+  document.querySelectorAll('#stats .rise').forEach(el => io.observe(el));
+}
+
+function countUp(el){
+  const to = +el.dataset.to, ms = 1400, start = performance.now();
+  const ease = t => 1 - Math.pow(2, -10 * t);          // shoots up, then settles
+  (function tick(now){
+    const t = Math.min((now - start) / ms, 1);
+    el.textContent = Math.round(to * ease(t)).toLocaleString();
+    if (t < 1) requestAnimationFrame(tick); else el.textContent = to.toLocaleString();
+  })(start);
+}
+
+/* ---------- achievements slider: arrows, drag, and a progress bar ---------- */
+function drawSlides(list){
+  const slider = document.getElementById('slider');
+  slider.innerHTML = list.map(a => `
+    <article class="slide">
+      <div class="pic">${a.image ? `<img src="${a.image}" alt="">` : ''}<span class="yr">${a.year}</span></div>
+      <div class="body"><h3>${esc(a.title)}</h3><p>${esc(a.detail)}</p></div>
+    </article>`).join('');
+  slider.addEventListener('scroll', moveThumb, {passive:true});
+  window.addEventListener('resize', moveThumb);
+  enableDrag(slider);
+  moveThumb();
+}
+
+function slideBy(dir){
+  const slider = document.getElementById('slider');
+  const card = slider.querySelector('.slide');
+  if (card) slider.scrollBy({left: dir * (card.offsetWidth + 26)});
+}
+
+function moveThumb(){
+  const s = document.getElementById('slider'), thumb = document.getElementById('thumb');
+  const visible = s.clientWidth / s.scrollWidth;
+  const max = s.scrollWidth - s.clientWidth;
+  thumb.style.width = (visible * 100) + '%';
+  const room = s.parentElement.querySelector('.track').clientWidth * (1 - visible);
+  thumb.style.transform = `translateX(${max ? (s.scrollLeft / max) * room : 0}px)`;
+}
+
+function enableDrag(el){
+  let down = false, x0 = 0, left0 = 0;
+  el.addEventListener('mousedown', e => { down = true; x0 = e.pageX; left0 = el.scrollLeft; el.classList.add('drag'); });
+  window.addEventListener('mouseup', () => { if (down){ down = false; el.classList.remove('drag'); } });
+  el.addEventListener('mousemove', e => { if (down){ e.preventDefault(); el.scrollLeft = left0 - (e.pageX - x0); } });
+}
+
+/* ---------- already signed in? ---------- */
+async function checkSignedIn(){
+  if (!token()) return;
+  const r = await fetch('/api/me', {headers: {Authorization: 'Bearer ' + token()}});
+  if (!r.ok){ localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); return; }
+  const me = await r.json();
+  document.getElementById('already').classList.remove('hide');
+  document.getElementById('studentPane').classList.add('hide');
+  document.getElementById('alreadyWho').textContent = `${me.name} (${me.email})`;
+  document.querySelector('#already .btn').href = home(me.role);
+  const cta = document.getElementById('navCta');
+  cta.textContent = {examiner: 'Open mark entry', teacher: 'Open my classes',
+                     office: 'Open the office desk'}[me.role] || 'Open my records';
+  cta.href = home(me.role);
+}
+checkSignedIn();
+
+/* ---------- role tabs ---------- */
+function pickRole(role, btn){
+  document.querySelectorAll('.roles button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('handoff').classList.add('hide');
+  const signedIn = !document.getElementById('already').classList.contains('hide');
+  document.getElementById('studentPane').classList.toggle('hide', role !== 'student' || signedIn);
+  document.getElementById('adminPane').classList.toggle('hide', role !== 'admin' || signedIn);
+  document.getElementById('teacherPane').classList.toggle('hide', role !== 'teacher' || signedIn);
+}
+
+function studentTab(which){
+  document.getElementById('tabIn').classList.toggle('on', which === 'in');
+  document.getElementById('tabReg').classList.toggle('on', which === 'reg');
+  document.getElementById('paneIn').classList.toggle('hide', which !== 'in');
+  document.getElementById('paneReg').classList.toggle('hide', which !== 'reg');
+}
+function openRegister(){ studentTab('reg'); }
+
+/* ---------- sign in ---------- */
+async function post(path, body){
+  const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  return r.json();
+}
+
+function home(role){
+  return {examiner: 'exam.html', teacher: 'teacher.html', office: 'office.html'}[role] || 'app.html';
+}
+
+const ROLE_NAME = {student:'my records', teacher:'my classes',
+                   office:'the office desk', examiner:'mark entry'};
+
+function keep(tok, remember, role, msg){
+  // remembered: the ticket survives closing the browser, and this tab moves there
+  if (remember){ localStorage.setItem(KEY, tok); location.href = home(role); return; }
+
+  // not remembered: the ticket belongs to this tab only. A tab opened from here
+  // gets its own copy, so several roles can be signed in side by side.
+  sessionStorage.setItem(KEY, tok);
+  showHandoff(role);
+}
+
+/* the browser only allows a new tab during a real click, so we ask for one */
+function showHandoff(role){
+  ['studentPane','adminPane','teacherPane','already'].forEach(id =>
+    document.getElementById(id).classList.add('hide'));
+  const box = document.getElementById('handoff');
+  box.classList.remove('hide');
+  box.innerHTML = `
+    <p style="font-size:16px">Signed in as <b>${({student:'a student', teacher:'a course teacher',
+        office:'the academic office', examiner:'an examiner'})[role] || role}</b>.</p>
+    <p style="color:var(--grey);margin-top:10px;font-size:14.5px;line-height:1.6;max-width:52ch">
+      Open it in its own tab. This tab then goes back to being a sign-in page, so you can
+      sign in as someone else and keep both open at once.</p>
+    <div style="margin-top:20px">
+      <button class="btn" onclick="openRole('${home(role)}')">Open ${ROLE_NAME[role] || 'my page'} in a new tab</button>
+      <button class="back" onclick="location.href='${home(role)}'">Open it in this tab instead</button>
+    </div>`;
+}
+
+function openRole(url){
+  window.open(url, '_blank');        // inside your click, so no pop-up blocker
+  setTimeout(freeThisTab, 500);      // the new tab has its copy; let go of ours
+}
+
+/* let go of the ticket here only — the tabs opened from here keep theirs */
+function freeThisTab(){
+  sessionStorage.removeItem(KEY);
+  localStorage.removeItem(KEY);
+  document.getElementById('handoff').classList.add('hide');
+  document.getElementById('already').classList.add('hide');
+  document.getElementById('adminPane').classList.add('hide');
+  document.getElementById('teacherPane').classList.add('hide');
+  document.getElementById('studentPane').classList.remove('hide');
+  document.querySelectorAll('.roles button').forEach((b, i) => b.classList.toggle('on', i === 0));
+  ['inPw','tcPw','adPw'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['inMsg','tcMsg','adMsg'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
+}
+
+async function signIn(){
+  const msg = document.getElementById('inMsg');
+  msg.textContent = '';
+  const remember = document.getElementById('inRemember').checked;
+  const res = await post('/api/signin', {
+    email: document.getElementById('inEmail').value,
+    password: document.getElementById('inPw').value, remember});
+  if (!res.ok){ msg.textContent = res.why; return; }
+  keep(res.token, remember, res.role, msg);
+}
+
+/* one sign-in for both staff doors: 'teacher', or 'admin' for office and examiners */
+async function staffSignIn(kind){
+  const p = kind === 'teacher' ? 'tc' : 'ad';
+  const msg = document.getElementById(p + 'Msg');
+  msg.textContent = '';
+  const remember = document.getElementById(p + 'Remember').checked;
+  const res = await post('/api/signin', {
+    email: document.getElementById(p + 'Email').value,
+    password: document.getElementById(p + 'Pw').value, remember});
+  if (!res.ok){ msg.textContent = res.why; return; }
+  const allowed = kind === 'teacher' ? ['teacher'] : ['office', 'examiner'];
+  if (!allowed.includes(res.role)){
+    msg.textContent = res.role === 'student'
+      ? 'That is a student account — use the Student tab.'
+      : `That account is ${res.role}, so it signs in at the other tab.`;
+    return;
+  }
+  keep(res.token, remember, res.role, msg);
+}
+
+function ordinal(n){ const t = ['th','st','nd','rd'], v = n % 100; return n + (t[(v - 20) % 10] || t[v] || t[0]); }
+
+/* ---------- register ---------- */
+async function regStart(){
+  const msg = document.getElementById('r1Msg');
+  msg.textContent = '';
+  const email = document.getElementById('rEmail').value;
+  const res = await post('/api/register/start', {
+    email, name: document.getElementById('rName').value, batch: document.getElementById('rBatch').value,
+    father: document.getElementById('rFa').value, mother: document.getElementById('rMo').value});
+  if (!res.ok){ msg.textContent = res.why; return; }
+  document.getElementById('rSent').textContent = email.trim().toLowerCase();
+  if (res.code){
+    document.getElementById('rCode').value = res.code;
+    document.getElementById('rWhere').textContent =
+      `Email sending is switched off in this demo, so your code is shown here instead: ${res.code}`;
+  } else {
+    document.getElementById('rWhere').textContent = res.emailed
+      ? 'Check your university inbox — it can take a minute.'
+      : 'Email isn\'t available for this address, so the code appears in the server\'s terminal window instead.';
+  }
+  document.getElementById('reg1').classList.add('hide');
+  document.getElementById('reg2').classList.remove('hide');
+  document.getElementById('s1').classList.remove('on');
+  document.getElementById('s2').classList.add('on');
+}
+
+async function regFinish(){
+  const msg = document.getElementById('r2Msg');
+  msg.textContent = '';
+  const pw = document.getElementById('rPw').value;
+  if (pw !== document.getElementById('rPw2').value){ msg.textContent = "The two passwords don't match."; return; }
+  const remember = document.getElementById('rRemember').checked;
+  const res = await post('/api/register/finish', {
+    email: document.getElementById('rSent').textContent,
+    code: document.getElementById('rCode').value, password: pw, remember});
+  if (!res.ok){ msg.textContent = res.why; return; }
+  keep(res.token, remember, res.role, msg);
+}
+
+function regBack(){
+  document.getElementById('reg2').classList.add('hide');
+  document.getElementById('reg1').classList.remove('hide');
+  document.getElementById('s2').classList.remove('on');
+  document.getElementById('s1').classList.add('on');
+}
+
+async function signOutHere(){
+  await fetch('/api/signout', {method:'POST', headers:{Authorization:'Bearer ' + token()}});
+  localStorage.removeItem(KEY); sessionStorage.removeItem(KEY);
+  location.reload();
+}
+</script>
+</body>
+</html>

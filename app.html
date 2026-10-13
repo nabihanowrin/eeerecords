@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EEE Records — University of Chittagong</title>
+<style>
+:root{
+  --side:#1E2A32;           /* sidebar */
+  --side-text:#AEBBC4;
+  --cream:#F6F2EE;          /* page */
+  --card:#FFFFFF;
+  --ink:#1C1A19;
+  --grey:#6E6764;
+  --line:#E4DCD6;
+  --accent:#7E2233;         /* the one accent */
+  --accent-wash:#F4E8EA;
+  --present:#3F6A52;
+  --present-wash:#E3EFE7;
+  --absent:#A4343F;
+  --absent-wash:#F8E3E5;
+  --ct:#B07A12;
+  --ct-wash:#F8EEDA;
+  --sans:Arial,Helvetica,sans-serif;
+  --serif:Arial,Helvetica,sans-serif;
+  --mono:Arial,Helvetica,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--cream);color:var(--ink);font-family:var(--sans)}
+button{font-family:inherit}
+
+/* ---------------- the one animation: slide up ---------------- */
+.in{opacity:0;transform:translateY(18px);animation:up .5s cubic-bezier(.16,.84,.34,1) forwards}
+.in.d1{animation-delay:.05s}.in.d2{animation-delay:.1s}.in.d3{animation-delay:.15s}.in.d4{animation-delay:.2s}
+@keyframes up{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.in{animation:none;opacity:1;transform:none}}
+
+/* ---------------- login ---------------- */
+.gate{min-height:100vh;display:grid;place-items:center;padding:30px 18px}
+.gate .panel{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:38px 34px}
+.gate h1{font-family:var(--serif);font-weight:600;font-size:34px;font-weight:400}
+.gate p{color:var(--grey);font-size:14.5px;line-height:1.6;margin-top:8px}
+.gate label{display:block;font-size:13px;font-weight:600;margin:26px 0 7px}
+.gate input{width:100%;padding:13px 15px;border:1px solid var(--line);border-radius:11px;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px;background:var(--cream)}
+.gate input:focus{outline:2px solid var(--accent)}
+.gate .err{color:var(--absent);font-size:13.5px;margin-top:10px;min-height:18px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:30px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer}
+.btn.solid{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.wide{width:100%;margin-top:14px;padding:14px}
+
+/* ---------------- shell ---------------- */
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+.side{background:var(--side);color:var(--side-text);padding:18px 0 18px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.me{padding:0 24px 16px;border-bottom:1px solid #2E3C46;margin-bottom:0}
+.me .dot{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:600;font-size:14px}
+.me .nm{color:#fff;font-weight:600;font-size:14.5px;margin-top:9px}
+.me .sub{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px;margin-top:3px}
+.me .sem{font-size:12.5px;margin-top:7px;color:#D6C8A8}
+
+/* ---- the curved active tab ---- */
+.nav{display:flex;flex-direction:column;gap:2px;padding:22px 0 22px 16px;min-height:0;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+.nav::-webkit-scrollbar{width:0;height:0;display:none}
+.nav button{
+  position:relative;display:flex;align-items:center;gap:12px;
+  padding:9px 18px;border:none;background:none;color:var(--side-text);
+  font-size:14px;text-align:left;cursor:pointer;
+  border-radius:22px 0 0 22px;transition:color .2s ease;
+}
+.nav button:hover{color:#fff}
+.nav button svg{width:18px;height:18px;flex-shrink:0}
+.nav button.on{background:var(--cream);color:var(--ink);font-weight:600}
+.nav button.on::before,.nav button.on::after{
+  content:"";position:absolute;right:0;width:22px;height:22px;background:transparent;pointer-events:none;
+}
+.nav button.on::before{top:-22px;border-bottom-right-radius:22px;box-shadow:8px 8px 0 8px var(--cream)}
+.nav button.on::after{bottom:-22px;border-top-right-radius:22px;box-shadow:8px -8px 0 8px var(--cream)}
+.nav .semitem{font-size:14px;padding-top:7px;padding-bottom:7px}
+.nav .semitem small{margin-left:auto;font-size:11.5px;opacity:.65}
+.nav .semitem.later{opacity:.55}
+.nav .caret{width:14px;display:inline-block;opacity:.7}
+.nav .caret.small{margin-left:auto}
+.nav .sub{padding-left:34px;font-size:13.5px;padding-top:7px;padding-bottom:7px}
+.nav .sub.deep{padding-left:52px;font-size:13px;padding-top:5px;padding-bottom:5px}
+.course.dim{opacity:.62}
+/* grade point out of 4 for one course */
+.gp{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:16px;padding:18px 22px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.gp .num{font-family:var(--serif);font-weight:600;font-size:44px;line-height:1;color:var(--accent)}
+.gp .num small{font-family:var(--sans);font-size:14px;color:var(--grey);margin-left:8px}
+.gp .txt{flex:1;min-width:220px}
+.gp .ttl{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gp .sub{font-size:13px;color:var(--grey);margin-top:5px;line-height:1.5}
+.gp.final{border-color:var(--accent);background:var(--accent-wash)}
+.gp.none .num{color:#C2B8B2}
+
+.result{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-top:14px;padding:14px 18px;border-radius:14px;background:#fff;border:1px solid var(--line);font-size:14px}
+.result span{color:var(--grey)}
+.result .grade{font-family:var(--serif);font-weight:600;font-size:26px;color:var(--accent,#7E2233);font-weight:400}
+.lockrows{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.lockrow{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.lockrow div{flex:1;min-width:0}
+.lockrow b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lockrow small{color:var(--grey);font-size:12px}
+.lockrow .pdf{font-size:11px;font-weight:700;background:#F8E3E5;color:#A4343F;padding:6px 8px;border-radius:8px}
+.btn.small{padding:7px 14px;font-size:13px}
+.locker .msg{margin-left:12px;font-size:13px;color:#A4343F}
+.nav .group{font-size:11px;letter-spacing:.1em;color:#6F8290;padding:10px 18px 3px}
+.side .out{margin:auto 24px 0;background:none;border:1px solid #3A4A55;color:var(--side-text);border-radius:30px;padding:9px;font-size:13px;cursor:pointer}
+
+.main{padding:34px 40px 70px;max-width:1240px;width:100%}
+h1.page{font-family:var(--serif);font-weight:600;font-size:36px;font-weight:400;line-height:1.1}
+.lede{color:var(--grey);margin-top:6px;font-size:14.5px}
+
+/* ---------------- cards, boxes ---------------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;margin-top:26px}
+.course{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;cursor:pointer;transition:border-color .2s ease,transform .2s ease;text-align:left}
+.course:hover{border-color:var(--accent);transform:translateY(-3px)}
+.course .code{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--accent)}
+.course h3{font-size:18px;font-weight:600;margin-top:6px;line-height:1.3}
+.course .t{font-size:13.5px;color:var(--grey);margin-top:10px}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--cream);color:var(--grey);margin-top:14px}
+
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 24px;margin-top:20px}
+.box h2{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.box h2 .r{margin-left:auto;font-weight:400;font-size:13px;color:var(--grey)}
+.two{display:grid;grid-template-columns:1.25fr 1fr;gap:20px}
+.two .box{margin-top:20px}
+
+/* small summary chips */
+.chips{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:150px}
+.chip .k{font-size:12px;color:var(--grey)}
+.chip .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:19px;margin-top:4px}
+.chip .v small{font-size:12.5px;color:var(--grey)}
+.chip .n{font-size:11.5px;color:var(--grey);margin-top:3px}
+.chip.main{border-color:var(--accent);background:var(--accent-wash)}
+
+/* inner tabs */
+.tabs{display:flex;gap:6px;margin-top:22px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:none;padding:11px 16px;font-size:14.5px;color:var(--grey);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th{text-align:left;font-size:11.5px;letter-spacing:.06em;color:var(--grey);font-weight:600;padding:9px 8px;border-bottom:1px solid var(--line)}
+td{padding:11px 8px;font-size:14px;border-bottom:1px solid #F0EAE5;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.r{text-align:right}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.pill.ok{background:var(--present-wash);color:var(--present)}
+.pill.no{background:var(--absent-wash);color:var(--absent)}
+.pill.ct{background:var(--ct-wash);color:var(--ct)}
+.pill.dim{background:#F0EAE5;color:var(--grey)}
+.pill.acc{background:var(--accent-wash);color:var(--accent)}
+.link{background:none;border:none;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;text-decoration:underline}
+
+/* history, nested */
+.hist td{background:#FBF8F5;padding:18px 20px}
+.ev{position:relative;padding:0 0 14px 22px;border-left:2px solid var(--line);margin-left:6px}
+.ev:last-child{padding-bottom:0}
+.ev::before{content:"";position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--card);border:2px solid var(--line)}
+.ev.now::before{background:var(--accent);border-color:var(--accent)}
+.ev .h{font-size:13.5px;font-weight:600}
+.ev .m{font-size:12.5px;color:var(--grey);margin-top:2px;line-height:1.5}
+.kids{margin:10px 0 2px 4px;padding-left:16px;border-left:1px dashed var(--line)}
+.kid{font-size:12.5px;color:var(--grey);padding:4px 0;line-height:1.45}
+.kid b{color:var(--ink);font-weight:600}
+.raise{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.raise input{flex:1;min-width:200px;padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-family:var(--sans);font-size:13.5px}
+.raise .msg{font-size:12.5px;color:var(--absent);width:100%}
+
+/* calendar */
+.cal-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cal-head .mo{font-weight:600;font-size:14.5px;flex:1}
+.cal-head button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal .dh{font-size:10.5px;color:var(--grey);text-align:center;padding-bottom:3px}
+.cal .d{aspect-ratio:1;border-radius:9px;display:grid;place-items:center;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:11.5px;position:relative;color:#B9AFA9}
+.cal .d.cls{color:var(--ink);background:#F3EEEA}
+.cal .d.present{background:var(--present-wash);color:var(--present);font-weight:500}
+.cal .d.absent{background:var(--absent-wash);color:var(--absent);font-weight:500}
+.cal .d.upcoming{border:1px dashed #CFC4BD;color:var(--grey)}
+.cal .d.today{outline:2px solid var(--ink);outline-offset:1px}
+.cal .d .ctdot{position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:var(--ct)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--grey);margin-top:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* lab section */
+.labhead{margin-top:34px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.labhead h2{font-family:var(--serif);font-weight:600;font-size:27px;font-weight:400}
+.split{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.split div{background:var(--cream);border-radius:12px;padding:11px 13px}
+.split .k{font-size:11.5px;color:var(--grey)}
+.split .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px;margin-top:3px}
+
+.foot{margin-top:26px;font-size:12.5px;color:var(--grey)}
+
+/* resources */
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px;margin-top:14px}
+.book{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.book .cover{aspect-ratio:3/4;background:var(--side);color:#fff;padding:16px;display:flex;flex-direction:column;justify-content:flex-end}
+.book .cover b{font-family:var(--serif);font-weight:600;font-size:20px;font-weight:400;line-height:1.15}
+.book .cover span{font-size:11.5px;color:#AEBBC4;margin-top:8px}
+.book .info{padding:12px 14px;font-size:12.5px;color:var(--grey)}
+.paper{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.paper .yr{font-family:var(--serif);font-weight:600;font-size:28px}
+.paper .t{font-size:13px;color:var(--grey);margin-top:4px}
+
+/* timetable */
+.tt{display:grid;grid-template-columns:110px repeat(7,1fr);gap:6px;margin-top:14px;overflow-x:auto}
+.tt .hd{font-size:11.5px;color:var(--grey);text-align:center;padding:6px 2px}
+.tt .day{font-weight:600;font-size:13.5px;display:flex;align-items:center}
+.tt .slot{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;min-height:58px}
+.tt .slot.ct{background:var(--ct-wash);border-color:#EAD7AF}
+.tt .slot.lab{background:var(--accent-wash);border-color:#EACBD0}
+.tt .slot b{display:block;font-size:12.5px}
+.tt .slot span{color:var(--grey);font-size:11px}
+.tt .empty{border:1px dashed #E6DED8;border-radius:10px}
+
+
+/* ================= HOME ================= */
+:root{ --butter:#F2EBC6; --mist:#D3E4E8; --clay:#E7DFDB; --sage:#DCE6D8; }
+.me .dot img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+
+.hello{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.hello .date{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;text-align:center;font-size:12px;color:var(--grey)}
+.hello .date b{display:block;font-size:13px;color:var(--ink)}
+
+.homegrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;margin-top:24px}
+.homegrid > *{min-width:0}
+.sect{font-family:var(--serif);font-weight:600;font-size:30px;font-weight:400}
+.profile{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px;display:grid;grid-template-columns:128px 1fr;gap:24px;align-items:start}
+.photo{width:128px;height:128px;border-radius:50%;background:var(--butter);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:44px;position:relative;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:cover}
+.photo label{position:absolute;inset:auto 0 0 0;background:rgba(30,42,50,.82);color:#fff;font-size:11.5px;text-align:center;padding:7px 0;cursor:pointer;opacity:0;transition:opacity .2s ease}
+.photo:hover label,.photo:focus-within label{opacity:1}
+.photo input{position:absolute;width:1px;height:1px;opacity:0}
+.profile h2{font-family:var(--serif);font-weight:600;font-size:30px;font-weight:400;line-height:1.1}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;margin-top:16px}
+.facts .k{font-size:11.5px;color:var(--grey)}
+.facts .v{font-size:14px;margin-top:2px}
+.facts .v.none{color:#B3A9A3;font-style:italic}
+.facts .v.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.upmsg{font-size:12px;margin-top:10px;color:var(--grey);min-height:16px}
+
+.gpa{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 24px}
+.gpa .top{display:flex;align-items:baseline;gap:12px}
+.gpa .big{font-family:var(--serif);font-weight:600;font-size:48px;line-height:1}
+.gpa .big small{font-family:var(--sans);font-size:15px;color:var(--grey)}
+.gpa svg{margin-top:10px}
+.gbar{fill:var(--side)}
+.gbar.now{fill:none;stroke:var(--grey);stroke-dasharray:4 4}
+.gline{fill:none;stroke:var(--accent);stroke-width:2}
+.gdot{fill:var(--accent)}
+.gtxt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:10px;fill:var(--grey)}
+.gval{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:10.5px;fill:var(--ink)}
+.ggrid{stroke:var(--line)}
+
+/* semester row with the spreading hover from the landing page */
+.semrow{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 16px;margin-top:14px}
+.semrow::-webkit-scrollbar{height:6px}
+.semrow::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.semcard{position:relative;flex:0 0 210px;height:190px;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--card);scroll-snap-align:start;padding:20px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;text-align:left}
+.semcard:nth-child(4n+1){background:var(--butter)}
+.semcard:nth-child(4n+2){background:var(--mist)}
+.semcard:nth-child(4n+3){background:var(--clay)}
+.semcard:nth-child(4n+4){background:var(--sage)}
+.semcard.later{cursor:default;opacity:.55}
+.semcard .ink{position:absolute;left:50%;top:65%;width:160%;aspect-ratio:1;border-radius:50%;background:var(--side);transform:translate(-50%,-50%) scale(0);transition:transform .55s cubic-bezier(.3,.7,.3,1)}
+.semcard:not(.later):hover .ink,.semcard:not(.later):focus-visible .ink{transform:translate(-50%,-50%) scale(1)}
+.semcard > *:not(.ink){position:relative;z-index:1;transition:color .3s ease .1s}
+.semcard:not(.later):hover > *:not(.ink){color:#fff}
+.semcard .n{font-family:var(--serif);font-weight:600;font-size:38px;line-height:1}
+.semcard .s{font-size:12.5px;color:var(--grey)}
+.semcard .g{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px}
+.semcard .badge{align-self:flex-start;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.7);color:var(--ink)}
+.semcard:not(.later):hover .s{color:#C9D3DA}
+
+/* drifting project columns from the landing page */
+.projects{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:14px;align-items:start}
+.projects .intro{padding-right:10px}
+.projects .intro p{color:var(--grey);font-size:14px;line-height:1.6;margin-top:8px}
+.pcol{height:440px;overflow:hidden;position:relative;border-radius:18px;
+  -webkit-mask-image:linear-gradient(transparent,#000 10%,#000 90%,transparent);
+          mask-image:linear-gradient(transparent,#000 10%,#000 90%,transparent)}
+.pstrip{display:flex;flex-direction:column;gap:16px}
+.pstrip.up{animation:driftUp 30s linear infinite}
+.pstrip.down{animation:driftDown 30s linear infinite}
+@keyframes driftUp{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@keyframes driftDown{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+.pcol:hover .pstrip{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.pstrip.up,.pstrip.down{animation:none}}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.pcard .pic{height:120px;background:var(--mist);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:30px;color:var(--side)}
+.pcard .pic img{width:100%;height:100%;object-fit:cover}
+.pcard .b{padding:14px 16px}
+.pcard h3{font-size:15px;font-weight:600;line-height:1.3}
+.pcard p{font-size:12.5px;color:var(--grey);margin-top:6px;line-height:1.5}
+.pcard .foot2{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11.5px;color:var(--grey)}
+
+.addform{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px;display:grid;gap:10px}
+.addform input,.addform textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:var(--sans);font-size:13.5px;background:var(--cream)}
+.addform textarea{min-height:70px;resize:vertical}
+.addform .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.addform .err{color:var(--absent);font-size:12.5px;min-height:16px}
+
+/* reveal on scroll, same effect as the landing page */
+.rise{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.16,.84,.34,1),transform .9s cubic-bezier(.16,.84,.34,1)}
+.rise.seen{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rise{opacity:1;transform:none;transition:none}}
+
+@media (max-width:1050px){ .homegrid{grid-template-columns:1fr} .projects{grid-template-columns:1fr 1fr} .projects .intro{grid-column:1/-1} }
+@media (max-width:600px){ .profile{grid-template-columns:1fr} .projects{grid-template-columns:1fr} .pcol.second{display:none} }
+
+.hide{display:none}
+@media (max-width:980px){ .two{grid-template-columns:1fr} .split{grid-template-columns:1fr} }
+@media (max-width:820px){
+  .shell{grid-template-columns:1fr}
+  .side{position:static;height:auto}
+  .nav{flex-direction:row;flex-wrap:wrap;padding:22px 14px 0}
+  .nav button{border-radius:22px}
+  .nav button.on::before,.nav button.on::after{display:none}
+  .main{padding:24px 16px 60px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= APP ================= -->
+<div class="shell hide" id="app">
+  <aside class="side">
+    <div class="me">
+      <div class="dot" id="initials"></div>
+      <div class="nm" id="name"></div>
+      <div class="sub" id="rollshow"></div>
+      <div class="sem" id="semline"></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <button class="out" onclick="signOut()">Sign out</button>
+  </aside>
+  <main class="main" id="view"></main>
+</div>
+
+<script>
+/* ============================================================
+   state
+   ============================================================ */
+let ROLL = null, SEM = null, PAGE = 'courses', COURSE = null, TAB = 'marks';
+let VIEW_SEM = 5, OPEN = new Set(), COURSES_OPEN = true;    // the sidebar tree
+const TODAY = new Date().toISOString().slice(0,10);
+
+const ICON = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  time:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg>',
+  pay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="3"/><path d="M2 10h20M6 15h4"/></svg>'
+};
+
+const KEY = 'eee_token';
+const token = () => sessionStorage.getItem(KEY) || localStorage.getItem(KEY);   // this tab's own sign-in wins
+
+async function api(path, opts = {}){
+  opts.headers = Object.assign({}, opts.headers, {Authorization: 'Bearer ' + token()});
+  const r = await fetch(path, opts);
+  if (r.status === 401){ toLanding(); throw new Error('signed out'); }
+  return r.json();
+}
+
+function toLanding(){
+  localStorage.removeItem(KEY); sessionStorage.removeItem(KEY);
+  location.href = 'landing.html#enter';
+}
+
+async function signOut(){
+  try { await api('/api/signout', {method:'POST'}); } catch (e) {}
+  toLanding();
+}
+
+/* ============================================================
+   login
+   ============================================================ */
+async function boot(){
+  if (!token()) return toLanding();
+  const me = await api('/api/me');
+  if (me.role !== 'student'){
+    location.href = {examiner:'exam.html', teacher:'teacher.html', office:'office.html'}[me.role] || 'landing.html';
+    return;
+  }
+  ROLL = me.roll;
+  SEM = await api('/api/semester');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('initials').textContent = me.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+  document.getElementById('name').textContent = me.name;
+  document.getElementById('rollshow').textContent = me.email;
+  VIEW_SEM = SEM.semester;
+  OPEN.add(SEM.semester);
+  const st = SEM.standing;
+  document.getElementById('semline').textContent = st.graduated ? 'All eight semesters complete'
+    : `Semester ${SEM.semester}${st.held_back ? ' · not promoted' : ''} · Lab group ${SEM.group}`;
+  go('home');
+}
+boot();
+
+/* ============================================================
+   sidebar — curved tab marks where you are
+   ============================================================ */
+function drawNav(){
+  let h = `<button class="${PAGE==='home'?'on':''}" onclick="go('home')">${ICON.home} Home</button>
+           <div class="group">SEMESTERS</div>`;
+  SEM.semesters.forEach(sm => {
+    const open = OPEN.has(sm.n);
+    const note = sm.state === 'done' ? sm.gpa.toFixed(2) : sm.state === 'now' ? 'now'
+               : sm.state === 'later' ? 'not yet' : '';
+    h += `<button class="semitem ${sm.state}" onclick="toggleSem(${sm.n})" aria-expanded="${open}">
+            <span class="caret">${open ? '▾' : '▸'}</span>${ordinal(sm.n)} semester<small>${note}</small></button>`;
+    if (!open) return;
+
+    const here = p => VIEW_SEM === sm.n && PAGE === p;
+    h += `<button class="sub ${here('courses')?'on':''}" onclick="showSem(${sm.n},'courses')">
+            ${ICON.book} Courses <span class="caret small" onclick="event.stopPropagation();COURSES_OPEN=!COURSES_OPEN;drawNav()">${COURSES_OPEN ? '▾' : '▸'}</span></button>`;
+    if (COURSES_OPEN) sm.courses.forEach(c => {
+      h += `<button class="sub deep ${PAGE==='course' && COURSE===c.course_id ? 'on' : ''}"
+              onclick="openCourse('${c.course_id}', ${sm.n})">${c.code}</button>`;
+    });
+    h += `<button class="sub ${here('timetable')?'on':''}" onclick="showSem(${sm.n},'timetable')">${ICON.time} Timetable</button>
+          <button class="sub ${here('payment')?'on':''}" onclick="showSem(${sm.n},'payment')">${ICON.pay} Payment</button>`;
+  });
+  document.getElementById('nav').innerHTML = h;
+}
+
+function toggleSem(n){ OPEN.has(n) ? OPEN.delete(n) : OPEN.add(n); drawNav(); }
+function showSem(n, page){ VIEW_SEM = n; OPEN.add(n); go(page); }
+const semData = n => SEM.semesters[n - 1];
+
+function go(page){
+  PAGE = page;
+  drawNav();
+  if (page === 'home')      return homePage();
+  if (page === 'courses')   return coursesPage();
+  if (page === 'timetable') return timetablePage();
+  if (page === 'payment')   return paymentPage();
+}
+
+const view = html => { const v = document.getElementById('view'); v.innerHTML = html; window.scrollTo(0,0); hydrate(v); };
+
+/* uploaded files are private: fetch them with the sign-in token, then show them */
+const BLOBS = {};
+async function fileURL(url){
+  if (!BLOBS[url]){
+    const r = await fetch(url, {headers: {Authorization: 'Bearer ' + token()}});
+    if (!r.ok) throw new Error('not allowed');
+    BLOBS[url] = URL.createObjectURL(await r.blob());
+  }
+  return BLOBS[url];
+}
+function hydrate(root){
+  root.querySelectorAll('img[data-auth]').forEach(async img => {
+    try { img.src = await fileURL(img.dataset.auth); } catch (e) { img.remove(); }
+  });
+}
+
+/* ============================================================
+   courses
+   ============================================================ */
+function coursesPage(){
+  const sm = semData(VIEW_SEM);
+  const credit = c => c.credits ? `${c.credits} credit${c.credits > 1 ? 's' : ''}` : 'credits: check booklet';
+  const cards = sm.courses.map((c,i) => `
+    <button class="course in d${Math.min(i,4)} ${sm.state === 'later' ? 'dim' : ''}" onclick="openCourse('${c.course_id}', ${sm.n})">
+      <div class="code">${c.code}${c.lab ? ' + ' + c.lab : ''}</div>
+      <h3>${esc(c.title)}</h3>
+      <div class="t">${c.teacher ? esc(c.teacher) : 'Teacher not listed yet'}</div>
+      <span class="tag">${c.kind === 'lab' ? 'Lab' : 'Theory'} · ${credit(c)}${c.lab ? ' · with lab' : ''}</span>
+    </button>`).join('');
+  const lede = {
+    done: `Published. GPA ${sm.gpa ? sm.gpa.toFixed(2) : ''}.`,
+    now: 'Your courses this semester. A theory course carries its lab inside it.',
+    past: 'Finished. Course-by-course marks for this semester aren\'t in the prototype, so each course shows what it covers.',
+    later: 'Not started yet. These are the courses the curriculum sets for this semester.',
+  }[sm.state];
+  const warn = sm.credits_known ? '' : '<p class="foot in d1">Credits for this semester were unclear in the curriculum photo — check the booklet.</p>';
+  view(`<h1 class="page in">${ordinal(sm.n)} semester</h1><p class="lede in d1">${lede}</p>${warn}<div class="grid">${cards}</div>`);
+}
+
+/* ============================================================
+   one course — theory on top, lab underneath
+   ============================================================ */
+async function openCourse(id, sem){
+  PAGE = 'course'; COURSE = id; TAB = 'marks';
+  if (sem){ VIEW_SEM = sem; OPEN.add(sem); }
+  drawNav();
+  const data = await api(`/api/course?course_id=${id}`);
+  window._course = data;
+  drawCourse();
+}
+
+function drawCourse(){
+  const {main, lab} = window._course;
+  const head = `
+    <h1 class="page in">${main.code} — ${main.title}</h1>
+    <p class="lede in d1">${main.teacher ? esc(main.teacher) : 'Teacher not listed yet'} · ${main.credits ? (main.kind === 'lab' ? main.credits + ' credit lab' : main.credits + ' credits') : 'credits: check booklet'}${lab ? ' · lab ' + lab.code : ''}</p>
+    ${gradeBlock(main)}${lab ? gradeBlock(lab) : ''}
+    <div class="tabs in d2">
+      <button class="${TAB==='marks'?'on':''}" onclick="TAB='marks';drawCourse()">Marks</button>
+      <button class="${TAB==='res'?'on':''}" onclick="TAB='res';drawCourse()">Resources</button>
+    </div>`;
+
+  if (TAB === 'res') return resourcesTab(head, main);
+
+  const nothing = !main.items.length && !(lab && lab.items.length) && !main.attendance.summary.held;
+  if (nothing){
+    const sm = semData(main.semester);
+    const why = sm.state === 'later' ? 'This course hasn\'t started yet.'
+              : sm.state === 'now'   ? 'No marks or attendance recorded yet.'
+              : 'Marks for this semester aren\'t loaded into the prototype.';
+    return view(head + `<div class="box in d3"><h2>No marks yet</h2><p class="lede">${why} When a teacher records something, it appears here with its full history.</p></div>`);
+  }
+  let body = main.kind === 'theory' ? theoryPart(main) : labPart(main, true);
+  if (lab) body += labPart(lab, false);
+
+  const changed = main.changed + (lab ? lab.changed : 0);
+  body += `<p class="foot">${changed === 0
+      ? 'No mark in this course has been changed since it was first entered.'
+      : changed + ' mark' + (changed>1?'s were':' was') + ' changed after first being entered. Open its history to see who changed it and why.'}</p>`;
+
+  view(head + body);
+  mountCalendars();
+}
+
+/* where this course stands out of 4.00 — published if the results are out,
+   otherwise an estimate from what has been marked so far */
+function gradeBlock(b){
+  const r = b.result;
+  if (r) return `<div class="gp final in d2">
+      <div class="num">${r.gp.toFixed(2)}<small>/ 4.00</small></div>
+      <div class="txt">
+        <div class="ttl">${b.code} · grade ${r.letter} <span class="pill ok">published</span></div>
+        <div class="sub">${fmt(r.total)} of ${fmt(r.full)} marks · ${fmt(r.percent)}%${r.absent_final ? ' · absent from the final' : ''}</div>
+      </div></div>`;
+
+  const e = b.estimate;
+  if (!e) return `<div class="gp none in d2">
+      <div class="num">—<small>/ 4.00</small></div>
+      <div class="txt"><div class="ttl">${b.code} · nothing marked yet</div>
+        <div class="sub">Your grade point appears here as soon as a mark or a class is recorded.</div></div></div>`;
+
+  return `<div class="gp in d2">
+      <div class="num">${e.gp.toFixed(2)}<small>/ 4.00</small></div>
+      <div class="txt">
+        <div class="ttl">${b.code} · would be ${e.letter} <span class="pill ct">estimate</span></div>
+        <div class="sub">${e.earned} of ${e.possible} marks so far · ${e.percent}% · from ${e.basis}.<br>${e.note}
+        ${e.impossible ? '<br><b style="color:var(--absent)">This is above full marks, which should be impossible — check the chain.</b>' : ''}</div>
+      </div></div>`;
+}
+
+function markCell(i){
+  if (i.state === 'entered' && i.absent) return `<span class="pill no">Absent</span>`;
+  if (i.state === 'entered')     return `<span class="mono">${fmt(i.value)} <span style="color:var(--grey)">/ ${fmt(i.out_of)}</span></span>`;
+  if (i.state === 'upcoming')    return `<span class="pill dim">on ${nice(i.held_on)}</span>`;
+  if (i.state === 'not entered') return `<span class="pill dim">not entered yet</span>`;
+  return `<span class="pill dim">not held yet</span>`;
+}
+
+function statusCell(i){
+  const bits = [];
+  if (i.was !== null) bits.push(`<span class="pill ct">changed · was ${fmt(i.was)}</span>`);
+  if (i.open_objection) bits.push(`<span class="pill acc">objection open</span>`);
+  if (i.state === 'entered' && i.counted === true)  bits.push(`<span class="pill ok">counted${i.absent ? ' as 0' : ''}</span>`);
+  if (i.state === 'entered' && i.counted === false) bits.push(`<span class="pill dim">dropped</span>`);
+  return bits.join(' ');
+}
+
+function itemRows(block){
+  return block.items.map(i => `
+    <tr>
+      <td>${i.label}${i.held_on ? `<div style="font-size:11.5px;color:var(--grey)">${nice(i.held_on)}</div>` : ''}</td>
+      <td>${markCell(i)}</td>
+      <td>${statusCell(i)}</td>
+      <td class="r">${i.state === 'entered' ? `<button class="link" onclick="toggleHistory('${block.course_id}','${i.item_id}','${i.label}',this)">History</button>` : ''}</td>
+    </tr>
+    <tr class="hist hide" id="h-${i.item_id}"><td colspan="4"></td></tr>`).join('');
+}
+
+function theoryPart(b){
+  const c = b.catm, a = b.attendance.summary;
+  return `
+    <div class="chips">
+      <div class="chip main in d2"><div class="k">CATM so far</div><div class="v">${fmt(c.total)} <small>/ ${c.total_of}</small></div><div class="n">estimate, before any curve</div></div>
+      <div class="chip in d3"><div class="k">Class tests</div><div class="v">${fmt(c.ct)} <small>/ ${c.ct_of}</small></div><div class="n">${c.ct_rule}</div></div>
+      <div class="chip in d3"><div class="k">Attendance</div><div class="v">${fmt(c.attendance)} <small>/ ${c.attendance_of}</small></div><div class="n">${a.percent === null ? 'no classes yet' : a.present + ' of ' + a.held + ' · ' + a.percent + '%'}</div></div>
+    </div>
+    <div class="two">
+      <div class="box in d3">
+        <h2>Class tests <span class="r">raw marks, out of what the teacher set</span></h2>
+        <table><tr><th>Test</th><th>Mark</th><th>Record</th><th></th></tr>${itemRows(b)}</table>
+      </div>
+      <div class="box in d4">
+        <h2>Attendance</h2>
+        <div class="calendar" data-course="${b.course_id}"></div>
+      </div>
+    </div>`;
+}
+
+function labPart(b, alone){
+  const m = b.marks, a = b.attendance.summary;
+  const val = x => x === null ? '—' : fmt(x);
+  return `
+    <div class="labhead in">
+      ${alone ? '' : `<h2>${b.code} — Lab</h2>`}
+      ${b.group ? `<span class="pill acc">Group ${b.group} · every other week</span>` : ''}
+    </div>
+    <div class="two">
+      <div class="box in d1">
+        <h2>Lab marks <span class="r">${fmt(m.total)} / ${m.total_of} so far</span></h2>
+        <div class="split">
+          <div><div class="k">Quiz and viva</div><div class="v">${val(m.quiz_viva)} / ${fmt(m.quiz_viva_of)}</div></div>
+          <div><div class="k">Practical and reports</div><div class="v">${val(m.practical)} / ${fmt(m.practical_of)}</div></div>
+          <div><div class="k">Attendance</div><div class="v">${val(m.attendance)} / ${fmt(m.attendance_of)}</div></div>
+        </div>
+        <table><tr><th>Item</th><th>Mark</th><th>Record</th><th></th></tr>${itemRows(b)}</table>
+      </div>
+      <div class="box in d2">
+        <h2>Lab sessions <span class="r">${a.held ? a.present + ' of ' + a.held + ' attended' : 'none held yet'}</span></h2>
+        <div class="calendar" data-course="${b.course_id}"></div>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   history — marks first, then each objection with its events
+   nested underneath, like the body of a for loop
+   ============================================================ */
+async function toggleHistory(courseId, itemId, label, btn){
+  const row = document.getElementById('h-' + itemId);
+  if (!row.classList.contains('hide')){ row.classList.add('hide'); btn.textContent = 'History'; return; }
+  btn.textContent = 'Close';
+  row.classList.remove('hide');
+  await fillHistory(courseId, itemId, label);
+}
+
+async function fillHistory(courseId, itemId, label){
+  const row = document.getElementById('h-' + itemId);
+  const h = await api(`/api/history?course_id=${courseId}&item_id=${itemId}`);
+
+  let html = '';
+  h.marks.forEach((e,i) => {
+    const d = e.detail, last = i === h.marks.length - 1;
+    html += `<div class="ev ${last?'now':''}">
+      <div class="h">${e.type === 'score' ? 'Entered as ' : 'Changed to '}<span class="mono">${d.absent ? 'Absent' : fmt(d.value)}</span></div>
+      <div class="m">by ${who(e.actor)} · ${when(e.at)} · block ${e.block_no}${d.reason ? '<br>Reason given: ' + d.reason : ''}</div>
+    </div>`;
+  });
+
+  h.threads.forEach(t => {
+    const o = t.opened;
+    html += `<div class="ev">
+      <div class="h">Objection #${t.id} <span class="pill ${t.status==='open'?'acc':'ok'}">${t.status}</span></div>
+      <div class="m">raised by ${who(o.actor)} · ${when(o.at)}<br>“${o.detail.note}”</div>
+      <div class="kids">${t.events.map(e => kid(e)).join('') || '<div class="kid">No response yet.</div>'}</div>
+    </div>`;
+  });
+
+  const open = h.threads.find(t => t.status === 'open');
+  html += `<div class="raise">${open
+      ? `<span class="m" style="font-size:12.5px;color:var(--grey)">Objection #${open.id} is open. You can raise another once it is answered.</span>`
+      : `<input id="note-${itemId}" placeholder="What looks wrong with ${label}?">
+         <button class="btn solid" onclick="raise('${courseId}','${itemId}','${label}')">Raise an objection</button>
+         <div class="msg" id="msg-${itemId}"></div>`}</div>`;
+
+  row.querySelector('td').innerHTML = html;
+}
+
+function kid(e){
+  const d = e.detail;
+  if (e.type === 'notification'){
+    const to = d.to ? ` to the ${d.to}` : '';
+    const what = d.status === 'sent'    ? `<b>Email sent${to}</b>`
+               : d.status === 'blocked' ? `<b>Email not sent${to}</b> — ${d.note}`
+               : d.status === 'off'     ? `<b>Email not sent${to}</b> — email isn't set up on this computer`
+               : d.status === 'failed'  ? `<b>Email failed${to}</b> — ${d.note}`
+               :                          `<b>Notification recorded${to}</b>`;       // entries made before emails existed
+    return `<div class="kid">↳ ${what} · ${when(e.at)}</div>`;
+  }
+  if (e.type === 'objection' && d.status === 'closed') return `<div class="kid">↳ <b>Closed by ${who(e.actor)}</b> — “${d.note}” · ${when(e.at)}</div>`;
+  return `<div class="kid">↳ ${e.type} · ${when(e.at)}</div>`;
+}
+
+async function raise(courseId, itemId, label){
+  const note = document.getElementById('note-' + itemId).value.trim();
+  const res = await api('/api/object', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({course_id:courseId, item_id:itemId, note})
+  });
+  if (!res.ok){ document.getElementById('msg-' + itemId).textContent = res.why; return; }
+  await fillHistory(courseId, itemId, label);
+}
+
+/* ============================================================
+   month calendar
+   ============================================================ */
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function mountCalendars(){
+  document.querySelectorAll('.calendar').forEach(el => {
+    const {main, lab} = window._course;
+    const block = [main, lab].find(b => b && b.course_id === el.dataset.course);
+    const byDay = {};
+    block.attendance.sessions.forEach(s => {
+      const prev = byDay[s.date];
+      if (s.state === 'absent' || !prev) byDay[s.date] = s.state;
+    });
+    const cts = {};
+    block.items.forEach(i => { if (i.category === 'ct' && i.held_on) cts[i.held_on] = i.label; });
+
+    const first = Object.keys(byDay).sort()[0] || TODAY;
+    const start = TODAY >= first ? TODAY : first;
+    el._state = {byDay, cts, y: +start.slice(0,4), m: +start.slice(5,7) - 1};
+    drawMonth(el);
+  });
+}
+
+function drawMonth(el){
+  const {byDay, cts, y, m} = el._state;
+  const firstDay = new Date(y, m, 1);
+  const days = new Date(y, m + 1, 0).getDate();
+  const offset = (firstDay.getDay() + 6) % 7;         // Monday first
+
+  let cells = ['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => `<div class="dh">${d}</div>`).join('');
+  for (let i = 0; i < offset; i++) cells += '<div></div>';
+  for (let d = 1; d <= days; d++){
+    const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const st = byDay[iso];
+    const cls = st === 'present' ? 'present' : st === 'absent' ? 'absent' : st === 'upcoming' ? 'upcoming' : st ? 'cls' : '';
+    cells += `<div class="d ${cls} ${iso===TODAY?'today':''}" title="${iso}${st?' · '+st:''}${cts[iso]?' · '+cts[iso]:''}">${d}${cts[iso]?'<span class="ctdot"></span>':''}</div>`;
+  }
+
+  el.innerHTML = `
+    <div class="cal-head">
+      <button aria-label="Previous month" onclick="shift(this,-1)">‹</button>
+      <div class="mo">${MONTHS[m]} ${y}</div>
+      <button aria-label="Next month" onclick="shift(this,1)">›</button>
+    </div>
+    <div class="cal">${cells}</div>
+    <div class="legend">
+      <span><i style="background:var(--present-wash);border:1px solid var(--present)"></i>present</span>
+      <span><i style="background:var(--absent-wash);border:1px solid var(--absent)"></i>absent</span>
+      <span><i style="border:1px dashed #CFC4BD"></i>upcoming</span>
+      <span><i style="background:var(--ct);border-radius:50%"></i>class test</span>
+    </div>`;
+}
+
+function shift(btn, step){
+  const el = btn.closest('.calendar');
+  let {y, m} = el._state;
+  m += step;
+  if (m < 0){ m = 11; y--; }
+  if (m > 11){ m = 0; y++; }
+  el._state.y = y; el._state.m = m;
+  drawMonth(el);
+}
+
+/* ============================================================
+   resources
+   ============================================================ */
+async function resourcesTab(head, b){
+  const r = await api(`/api/resources?course_id=${b.course_id}`);
+  const books = r.books.map((k,i) => `
+    <div class="book in d${Math.min(i+1,4)}">
+      <div class="cover"><b>${k.title}</b><span>${k.author}</span></div>
+      <div class="info">Available from the seminar library — ask at the department office</div>
+    </div>`).join('') || '<p class="lede">No books listed yet.</p>';
+  const papers = r.papers.map((p,i) => `
+    <div class="paper in d${Math.min(i+1,4)}"><div class="yr">${p.year}</div><div class="t">Final exam questions</div><span class="pill dim" style="margin-top:12px">${p.status}</span></div>`).join('');
+  const cts = r.cts.map((p,i) => `
+    <div class="paper in d${Math.min(i+1,4)}"><div class="yr">${p.label}</div><div class="t">${p.year} questions</div><span class="pill dim" style="margin-top:12px">${p.status}</span></div>`).join('');
+
+  const mine = (await api(`/api/locker?course_id=${b.course_id}`)).files;
+  const mb = n => n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+  const files = mine.map(f => `<div class="lockrow"><span class="pdf">PDF</span>
+      <div><b>${esc(f.name)}</b><small>${mb(f.size)} · added ${when(f.at)}</small></div>
+      <button class="btn ghost small" onclick="openFile(${f.id})">Open</button>
+      <button class="btn ghost small" onclick="dropFile(${f.id})">Delete</button></div>`).join('')
+    || '<p class="lede">Nothing here yet.</p>';
+  view(head + `
+    <div class="box in d2 locker"><h2>My private files</h2>
+      <p class="lede"><b>Only you can see these.</b> No one else — not teachers, not classmates — can open them, and there is no way to share them. PDFs only, up to 30 MB each, 200 MB in total.</p>
+      <label class="btn" style="margin-top:12px;display:inline-block">Add a PDF
+        <input type="file" accept="application/pdf,.pdf" hidden onchange="addFile(this, '${b.course_id}')"></label>
+      <span class="msg" id="lockMsg"></span>
+      <div class="lockrows">${files}</div></div>
+    <p class="lede in d2" style="margin-top:18px">${r.note}</p>
+    <div class="box in d2"><h2>Books</h2><div class="shelf">${books}</div></div>
+    <div class="box in d3"><h2>Previous final questions</h2><div class="shelf">${papers}</div></div>
+    <div class="box in d4"><h2>Class test questions</h2><div class="shelf">${cts}</div></div>`);
+}
+
+async function addFile(input, courseId){
+  const file = input.files[0], msg = document.getElementById('lockMsg');
+  if (!file) return;
+  msg.textContent = 'Uploading…';
+  const r = await fetch(`/api/locker/upload?course_id=${courseId}`, {method:'POST',
+    headers:{Authorization:'Bearer ' + token(), 'X-Filename': encodeURIComponent(file.name), 'Content-Type':'application/pdf'}, body:file});
+  const res = await r.json();
+  if (!res.ok){ msg.textContent = res.why; return; }
+  drawCourse();
+}
+async function openFile(id){
+  const tab = window.open('', '_blank');           // opened first, so pop-up blockers allow it
+  try { tab.location = await fileURL(`/api/file?locker=${id}`); }
+  catch (e) { tab.close(); alert('That file could not be opened.'); }
+}
+async function dropFile(id){
+  if (!confirm('Delete this file from your locker? This cannot be undone.')) return;
+  await api('/api/locker/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+  drawCourse();
+}
+
+/* ============================================================
+   timetable
+   ============================================================ */
+function timetablePage(){
+  if (VIEW_SEM !== SEM.routine_semester){
+    return view(`<h1 class="page in">Timetable · ${ordinal(VIEW_SEM)} semester</h1>
+      <div class="box in d1"><h2>No routine for this semester</h2>
+      <p class="lede">Only the Semester ${SEM.routine_semester} routine is in the prototype. A semester's routine is added when the department publishes it.</p></div>`);
+  }
+  const slots = ['09:00','09:45','10:30','11:15','11:30','12:15','13:00','14:00'];
+  const labels = ['9:00','9:45','10:30','11:15','11:30','12:15','1:00','2:00'];
+  const days = [[6,'Sunday'],[0,'Monday'],[1,'Tuesday'],[2,'Wednesday'],[3,'Thursday']];
+
+  let grid = '<div></div>' + labels.slice(0,7).map(l => `<div class="hd">${l}</div>`).join('');
+  days.forEach(([wd, name]) => {
+    grid += `<div class="day">${name}</div>`;
+    const today = SEM.timetable.filter(t => t.weekday === wd);
+    let col = 0;
+    while (col < 7){
+      const slot = today.find(t => t.start === slots[col]);
+      if (slot){
+        let span = 1;
+        while (col + span < 7 && slots[col + span] < slot.finish) span++;
+        const isLab = slot.codes.length > 1 || slot.finish.slice(0,2) - slot.start.slice(0,2) >= 2;
+        grid += `<div class="slot ${slot.ct?'ct':isLab?'lab':''}" style="grid-column:span ${span}">
+          <b>${slot.codes.join(' / ')}${slot.ct ? ' — CT' : ''}</b><span>${slot.room} · ${slot.start}–${slot.finish}</span></div>`;
+        col += span;
+      } else {
+        grid += `<div class="empty"></div>`;
+        col++;
+      }
+    }
+  });
+
+  const upcoming = SEM.cts.filter(c => c.date >= TODAY).slice(0, 8)
+    .map(c => `<tr><td class="mono">${nice(c.date)}</td><td>${c.code}</td><td><span class="pill ct">${c.label}</span></td></tr>`).join('');
+
+  view(`
+    <h1 class="page in">Timetable</h1>
+    <p class="lede in d1">Semester ${SEM.semester} weekly routine. Afternoon slots run 2:00–4:30. Class tests in gold, labs in rose.</p>
+    <div class="box in d2"><div class="tt">${grid}</div></div>
+    <div class="box in d3"><h2>Coming class tests</h2>
+      <table><tr><th>Date</th><th>Course</th><th>Test</th></tr>${upcoming}</table></div>`);
+}
+
+/* ============================================================
+   payment — placeholder
+   ============================================================ */
+function paymentPage(){
+  view(`
+    <h1 class="page in">Payment</h1>
+    <div class="box in d1">
+      <h2>Not connected</h2>
+      <p class="lede">Fees are handled by the university's finance office. This page will stay empty until that office agrees to share payment records.</p>
+    </div>`);
+}
+
+
+/* ============================================================
+   HOME — the first page after sign-in
+   ============================================================ */
+let HOME = null;
+
+async function homePage(){
+  HOME = await api('/api/home');
+  const p = HOME.profile;
+  setSidebarPhoto(p.photo, p.name);
+
+  const fact = (k, v, mono) => `<div><div class="k">${k}</div>
+      <div class="v ${v ? (mono?'mono':'') : 'none'}">${v || 'not on file yet'}</div></div>`;
+
+  const d = new Date();
+  view(`
+    <div class="hello">
+      <div class="date in"><b>${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}</b>${d.toLocaleDateString('en-GB',{weekday:'long'})}</div>
+      <h1 class="page in d1">Welcome back, ${p.name.split(' ')[0]}</h1>
+    </div>
+
+    <div class="homegrid">
+      <section class="profile in d2">
+        <div>
+          <div class="photo" id="photoBox">
+            ${p.photo ? `<img data-auth="${p.photo}" alt="${esc(p.name)}">` : initials(p.name)}
+            <label for="photoIn">Change photo</label>
+            <input type="file" id="photoIn" accept=".jpg,.jpeg,.png,.webp" onchange="sendPhoto(this)">
+          </div>
+          <div class="upmsg" id="photoMsg"></div>
+        </div>
+        <div>
+          <h2>${p.name}</h2>
+          <div class="facts">
+            ${fact('Roll number', p.roll, true)}
+            ${fact('Student ID', p.student_id, true)}
+            ${fact('Session', p.session)}
+            ${fact('University email', p.email, true)}
+            ${fact("Father's name", p.father)}
+            ${fact("Mother's name", p.mother)}
+          </div>
+          <p class="upmsg">Only you and the academic office can see this card.</p>
+        </div>
+      </section>
+
+      <section class="gpa in d3">
+        <div class="top">
+          <div class="big">${HOME.cgpa === null ? '—' : HOME.cgpa.toFixed(2)} <small>/ 4.00 CGPA</small></div>
+        </div>
+        <div class="lede" style="font-size:13px">${HOME.credits_done} credits completed · bars are each semester's GPA, the line is your running CGPA</div>
+        ${gpaChart(HOME.semesters)}
+      </section>
+    </div>
+
+    <h2 class="sect rise" style="margin-top:40px">Your semesters</h2>
+    <div class="semrow rise">${HOME.semesters.map(semCard).join('')}</div>
+
+    <h2 class="sect rise" style="margin-top:36px">Projects</h2>
+    <div class="projects rise">
+      <div class="intro">
+        <p>Work you have done outside the marks. You add these yourself, so each one is <b>self-reported</b> until a supervising teacher confirms it, which adds a <b>verified</b> tag and writes the confirmation to the chain.</p>
+        <button class="btn solid" style="margin-top:16px" onclick="toggleAdd()">Add a project</button>
+        <div id="addBox"></div>
+      </div>
+      ${projectColumns(HOME.projects)}
+    </div>`);
+
+  watchRise();
+}
+
+/* ---------- GPA chart: bars per semester, line for running CGPA ---------- */
+function gpaChart(sems){
+  const W = 470, H = 210, left = 30, base = 180, top = 20, slot = (W - left - 10) / 8;
+  const y = v => base - (v / 4) * (base - top);
+
+  let g = '';
+  [1,2,3,4].forEach(v => {
+    g += `<line class="ggrid" x1="${left}" x2="${W-10}" y1="${y(v)}" y2="${y(v)}"/>
+          <text class="gtxt" x="${left-8}" y="${y(v)+3}" text-anchor="end">${v}</text>`;
+  });
+
+  const pts = [];
+  sems.forEach((s, i) => {
+    const x = left + i * slot + slot * 0.2, w = slot * 0.6;
+    if (s.state === 'done'){
+      g += `<rect class="gbar" x="${x}" y="${y(s.gpa)}" width="${w}" height="${base - y(s.gpa)}" rx="4"/>
+            <text class="gval" x="${x + w/2}" y="${y(s.gpa) - 5}" text-anchor="middle">${s.gpa.toFixed(2)}</text>`;
+      pts.push([x + w/2, y(s.cgpa_after)]);
+    } else if (s.state === 'now'){
+      g += `<rect class="gbar now" x="${x}" y="${y(4)}" width="${w}" height="${base - y(4)}" rx="4"/>
+            <text class="gtxt" x="${x + w/2}" y="${y(2)}" text-anchor="middle">now</text>`;
+    }
+    g += `<text class="gtxt" x="${x + w/2}" y="${base + 16}" text-anchor="middle">S${s.n}</text>`;
+  });
+
+  if (pts.length > 1) g += `<polyline class="gline" points="${pts.map(p => p.join(',')).join(' ')}"/>`;
+  pts.forEach(([px, py]) => g += `<circle class="gdot" cx="${px}" cy="${py}" r="3.5"/>`);
+
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Semester GPA bars with running CGPA line">${g}</svg>`;
+}
+
+/* ---------- semester cards with the spreading hover ---------- */
+function semCard(s){
+  const label = s.state === 'done' ? `GPA ${s.gpa.toFixed(2)}` : s.state === 'now' ? 'in progress'
+              : s.state === 'past' ? 'finished' : 'not started';
+  const badge = s.state === 'now' ? '<span class="badge">current</span>' : '<span></span>';
+  const click = `onclick="showSem(${s.n},'courses')"`;
+  return `<button class="semcard ${s.state === 'later' ? 'later' : ''}" ${click}>
+      <div class="ink"></div>
+      ${badge}
+      <div><div class="n">${ordinal(s.n)}</div><div class="s">Semester</div></div>
+      <div class="g">${label}</div>
+    </button>`;
+}
+
+
+/* ---------- drifting project columns ---------- */
+function projectColumns(list){
+  if (!list.length) return `<div class="pcol"><p class="lede" style="padding:20px">No projects yet.</p></div><div></div>`;
+
+  // fill each column with enough cards to move, then double it for a seamless loop
+  let pool = list.slice();
+  while (pool.length < 4) pool = pool.concat(list);
+  const a = pool, b = pool.slice(1).concat(pool.slice(0, 1));   // same cards, shifted by one, so the columns never line up
+  const strip = (arr, dir) => `<div class="pstrip ${dir}">${arr.concat(arr).map(projectCard).join('')}</div>`;
+  return `<div class="pcol">${strip(a,'up')}</div><div class="pcol second">${strip(b,'down')}</div>`;
+}
+
+function projectCard(p){
+  const tag = p.verified_by
+    ? `<span class="pill ok">verified</span>`
+    : `<span class="pill dim">self-reported</span>`;
+  const pic = p.image ? `<img data-auth="${p.image}" alt="">` : initials(p.title);
+  return `<article class="pcard">
+      <div class="pic">${pic}</div>
+      <div class="b"><h3>${esc(p.title)}</h3><p>${esc(p.summary || '')}</p>
+        <div class="foot2"><span>${p.year}</span>${tag}</div></div>
+    </article>`;
+}
+
+function toggleAdd(){
+  const box = document.getElementById('addBox');
+  if (box.innerHTML){ box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="addform">
+      <input id="pTitle" placeholder="Title" maxlength="120">
+      <textarea id="pSum" placeholder="What did you build or study?" maxlength="400"></textarea>
+      <div class="row">
+        <input id="pYear" type="number" value="${new Date().getFullYear()}" style="width:110px">
+        <input id="pPic" type="file" accept=".jpg,.jpeg,.png,.webp" style="flex:1">
+      </div>
+      <div class="row"><button class="btn solid" onclick="saveProject()">Save project</button></div>
+      <div class="err" id="pErr"></div>
+    </div>`;
+}
+
+async function saveProject(){
+  const err = document.getElementById('pErr');
+  const res = await api('/api/project', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      title: document.getElementById('pTitle').value,
+      summary: document.getElementById('pSum').value,
+      year: document.getElementById('pYear').value})
+  });
+  if (!res.ok){ err.textContent = res.why; return; }
+
+  const file = document.getElementById('pPic').files[0];
+  if (file){
+    const up = await upload('project', file, res.id);
+    if (!up.ok){ err.textContent = 'Project saved, but the picture was refused: ' + up.why; return; }
+  }
+  homePage();
+}
+
+/* ---------- uploads: raw bytes, file name in a header ---------- */
+async function upload(kind, file, projectId){
+  const r = await fetch(`/api/upload?kind=${kind}${projectId ? '&project_id=' + projectId : ''}`, {
+    method:'POST',
+    headers:{'Authorization': 'Bearer ' + token(), 'X-Filename': encodeURIComponent(file.name), 'Content-Type': file.type || 'application/octet-stream'},
+    body: file
+  });
+  return r.json();
+}
+
+async function sendPhoto(input){
+  const msg = document.getElementById('photoMsg');
+  const file = input.files[0];
+  if (!file) return;
+  msg.textContent = 'Uploading…';
+  const res = await upload('photo', file);
+  if (!res.ok){ msg.textContent = res.why; return; }
+  msg.textContent = 'Saved. Its fingerprint is on the chain.';
+  document.getElementById('photoBox').querySelector('img')?.remove();
+  homePage();
+}
+
+function setSidebarPhoto(photo, name){
+  const dot = document.getElementById('initials');
+  dot.innerHTML = photo ? `<img data-auth="${photo}" alt="">` : initials(name);
+  hydrate(dot);
+}
+
+/* ---------- reveal on scroll ---------- */
+function watchRise(){
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('seen');
+  }), {threshold: 0.15});
+  document.querySelectorAll('.rise').forEach(el => io.observe(el));
+}
+
+function initials(name){ return name.split(' ').map(w => w[0]).slice(0,2).join(''); }
+function ordinal(n){ return n + (['th','st','nd','rd'][n % 10 > 3 || Math.floor(n % 100 / 10) === 1 ? 0 : n % 10] || 'th'); }
+function esc(t){ const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+/* ============================================================
+   helpers
+   ============================================================ */
+function fmt(n){ return Number.isInteger(n) ? n : Number(n).toFixed(2).replace(/\.?0+$/,''); }
+function nice(iso){ const [y,m,d] = iso.split('-'); return `${+d} ${MONTHS[+m-1].slice(0,3)}`; }
+function when(at){ return at.slice(0,16).replace('T',' '); }
+function who(actor){
+  if (actor.startsWith('student:')) return 'you';
+  if (actor === 'system') return 'the system';
+  return actor.replace('teacher:','teacher ');
+}
+</script>
+</body>
+</html>

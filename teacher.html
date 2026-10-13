@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My classes — EEE Records</title>
+<style>
+:root{
+  --side:#1E2A32; --side-text:#AEBBC4; --cream:#F6F2EE; --card:#FFFFFF;
+  --ink:#1C1A19; --grey:#6E6764; --line:#E4DCD6;
+  --accent:#7E2233; --accent-wash:#F4E8EA;
+  --ok:#3F6A52; --ok-wash:#E3EFE7; --bad:#A4343F; --bad-wash:#F8E3E5;
+  --edit:#B07A12; --edit-wash:#F8EEDA;
+  --butter:#F2EBC6; --mist:#D3E4E8; --clay:#E7DFDB; --sage:#DCE6D8;
+  --sans:Arial,Helvetica,sans-serif; --serif:Arial,Helvetica,sans-serif; --mono:Arial,Helvetica,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--cream);color:var(--ink);font-family:var(--sans)}
+button,input,select,textarea{font-family:inherit}
+
+.in{opacity:0;transform:translateY(18px);animation:up .5s cubic-bezier(.16,.84,.34,1) forwards}
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}
+@keyframes up{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.in{animation:none;opacity:1;transform:none}}
+
+/* ---------------- shell, same as the student page ---------------- */
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+.side{background:var(--side);color:var(--side-text);padding:18px 0 18px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.me{padding:0 24px 16px;border-bottom:1px solid #2E3C46;margin-bottom:0}
+.me .dot{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:600;font-size:14px}
+.me .nm{color:#fff;font-weight:600;font-size:14.5px;margin-top:9px}
+.me .sub{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px;margin-top:3px;overflow-wrap:anywhere}
+.me .role{font-size:12.5px;margin-top:7px;color:#D6C8A8}
+
+.nav{display:flex;flex-direction:column;gap:2px;padding:22px 0 22px 16px;min-height:0;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+.nav::-webkit-scrollbar{width:0;height:0;display:none}
+.nav button{position:relative;display:flex;align-items:center;gap:12px;padding:9px 18px;border:none;background:none;color:var(--side-text);font-size:14px;text-align:left;cursor:pointer;border-radius:22px 0 0 22px;transition:color .2s ease}
+.nav button:hover{color:#fff}
+.nav button svg{width:18px;height:18px;flex-shrink:0}
+.nav button.on{background:var(--cream);color:var(--ink);font-weight:600}
+.nav button.on::before,.nav button.on::after{content:"";position:absolute;right:0;width:22px;height:22px;background:transparent;pointer-events:none}
+.nav button.on::before{top:-22px;border-bottom-right-radius:22px;box-shadow:8px 8px 0 8px var(--cream)}
+.nav button.on::after{bottom:-22px;border-top-right-radius:22px;box-shadow:8px -8px 0 8px var(--cream)}
+.nav .code{font-size:13.5px;padding-top:6px;padding-bottom:6px}
+.nav .group{font-size:11px;letter-spacing:.1em;color:#6F8290;padding:10px 18px 3px}
+.side .out{margin:auto 24px 0;background:none;border:1px solid #3A4A55;color:var(--side-text);border-radius:30px;padding:9px;font-size:13px;cursor:pointer}
+
+.main{padding:34px 40px 70px;max-width:1240px;width:100%}
+h1.page{font-family:var(--serif);font-weight:600;font-size:36px;font-weight:400;line-height:1.1}
+.lede{color:var(--grey);margin-top:6px;font-size:14.5px;line-height:1.55}
+
+/* ---------------- cards and boxes ---------------- */
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 24px;margin-top:20px}
+.box h2{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.box h2 .r{margin-left:auto;font-weight:400;font-size:13px;color:var(--grey)}
+
+.profile{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px 26px;margin-top:24px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.profile .big{width:76px;height:76px;border-radius:50%;background:var(--butter);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:30px}
+.profile h2{font-family:var(--serif);font-weight:600;font-size:28px;font-weight:400;line-height:1.1}
+.profile .m{color:var(--grey);font-size:13.5px;margin-top:5px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;margin-top:18px}
+.class{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;cursor:pointer;text-align:left;transition:border-color .2s ease,transform .2s ease}
+.class:hover{border-color:var(--accent);transform:translateY(-3px)}
+.class.flat{cursor:default}
+.class.flat:hover{border-color:var(--line);transform:none}
+.class .code{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--accent)}
+.class h3{font-size:17px;font-weight:600;margin-top:6px;line-height:1.3}
+.class .t{font-size:13.5px;color:var(--grey);margin-top:10px}
+.class .foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.pill.ok{background:var(--ok-wash);color:var(--ok)}
+.pill.wait{background:var(--edit-wash);color:var(--edit)}
+.pill.no{background:var(--bad-wash);color:var(--bad)}
+.pill.dim{background:#F0EAE5;color:var(--grey)}
+.pill.acc{background:var(--accent-wash);color:var(--accent)}
+
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:30px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer}
+.btn.solid{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.small{padding:7px 14px;font-size:13px}
+
+.form{display:grid;gap:12px;margin-top:14px;max-width:560px}
+.form label{font-size:12px;color:var(--grey)}
+.form select{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;font-size:14px;background:var(--cream)}
+.form .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.form .msg{font-size:13px;min-height:18px}
+.form .msg.bad{color:var(--bad)}
+.form .msg.good{color:var(--ok)}
+
+/* ---------------- inner tabs ---------------- */
+.tabs{display:flex;gap:6px;margin-top:22px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:none;padding:11px 16px;font-size:14.5px;color:var(--grey);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+
+/* ---------------- the attendance sheet ---------------- */
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0 12px}
+.key{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--grey)}
+.key i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:auto;max-height:72vh}
+.sheet table{border-collapse:separate;border-spacing:0;min-width:100%}
+.sheet th,.sheet td{padding:0;border-bottom:1px solid #EFE9E4;white-space:nowrap}
+.sheet thead th{position:sticky;top:0;z-index:2;background:var(--card);padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:center}
+.sheet th.who,.sheet td.who{position:sticky;left:0;z-index:1;background:var(--card);text-align:left;padding:8px 16px;border-right:1px solid var(--line)}
+.sheet thead th.who{z-index:3}
+.sheet td.who .r{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px}
+.sheet td.who .nm{font-size:12px;color:var(--grey);margin-top:1px}
+.sheet th .dt{font-size:12.5px;font-weight:600}
+.sheet th .slot{font-size:10.5px;color:var(--grey);font-weight:400;margin-top:2px}
+.sheet th.future{opacity:.5}
+.hbtns{display:flex;gap:4px;justify-content:center;margin-top:6px}
+.mini{border:1px solid var(--line);background:var(--cream);border-radius:20px;padding:3px 8px;font-size:10.5px;cursor:pointer}
+.mini.save{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.mini:disabled{opacity:.45;cursor:not-allowed}
+
+td.cell{text-align:center;font-size:15px;cursor:pointer;min-width:52px;height:38px;user-select:none}
+td.cell.yes{background:var(--ok-wash);color:var(--ok);font-weight:600}
+td.cell.no{background:var(--bad-wash);color:var(--bad);font-weight:600}
+td.cell.pend.yes,td.cell.pend.no{box-shadow:inset 0 0 0 2px var(--edit)}
+td.cell.off,td.cell.future{background:#FAF7F4;color:#C8BEB8;cursor:default}
+td.cell.miss{color:#C8BEB8;cursor:default}
+td.cell.changed{outline:2px dashed var(--edit);outline-offset:-3px}
+tbody tr:hover td.cell{filter:brightness(.985)}
+tbody tr:hover td.who{background:#FBF7F2}
+
+/* marks grid */
+td.cell.mark{cursor:default;padding:7px 10px}
+.cell input{width:74px;padding:8px 6px;border:1px solid var(--line);border-radius:9px;text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:14.5px;background:var(--cream)}
+.cell input:focus{outline:2px solid var(--accent);background:#fff}
+.cell input.edited{border-color:var(--edit);background:var(--edit-wash)}
+.cell input.absent{color:var(--bad);font-weight:600}
+.cell input.bad{border-color:var(--bad);background:var(--bad-wash);color:var(--bad)}
+.cell input.wasChanged{box-shadow:inset 0 -3px 0 var(--edit)}
+input.outof{width:52px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px;background:var(--cream)}
+.count{font-size:13.5px;color:var(--grey);margin-left:auto}
+table.review{width:100%;border-collapse:collapse;margin-top:12px}
+table.review th{font-size:12px;color:var(--grey);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+table.review td{font-size:13.5px;padding:8px 10px;border-bottom:1px solid #F0EAE5}
+table.review input.why{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-size:13px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* the class chart */
+.chart{width:100%;height:auto;margin-top:12px}
+.ggrid{stroke:var(--line)}
+.gtxt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:10px;fill:var(--grey)}
+.ct{fill:none;stroke:var(--accent);stroke-width:2}
+.ct-dot{fill:var(--accent)}
+.att{fill:none;stroke:var(--ok);stroke-width:2}
+.att-dot{fill:var(--ok)}
+
+/* CATM breakdown */
+.catm{margin-top:12px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.crow{display:grid;grid-template-columns:minmax(0,1.3fr) 130px minmax(0,1fr);gap:12px;align-items:baseline;padding:11px 16px;border-bottom:1px solid #F0EAE5;font-size:14px}
+.crow:last-child{border-bottom:none}
+.crow .v{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.crow .n{font-size:12px;color:var(--grey)}
+.crow.total{background:var(--accent-wash);font-weight:600}
+.crow.total .v{font-size:16px}
+
+.change{background:var(--card);border:1px solid var(--edit);border-radius:16px;padding:18px 20px;margin-top:16px}
+.change h3{font-size:15px;font-weight:600}
+.change .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.change input{flex:1;min-width:220px;padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:13.5px}
+.change .msg{font-size:12.5px;color:var(--bad);width:100%}
+
+.foot2{margin-top:26px;font-size:12.5px;color:var(--grey)}
+.hide{display:none}
+@media (max-width:820px){
+  .shell{grid-template-columns:1fr}
+  .side{position:static;height:auto}
+  .nav{flex-direction:row;flex-wrap:wrap;padding:22px 14px 0}
+  .nav button{border-radius:22px}
+  .nav button.on::before,.nav button.on::after{display:none}
+  .main{padding:24px 16px 60px}
+}
+</style>
+</head>
+<body>
+
+<div class="shell hide" id="app">
+  <aside class="side">
+    <div class="me">
+      <div class="dot" id="initials"></div>
+      <div class="nm" id="name"></div>
+      <div class="sub" id="mail"></div>
+      <div class="role">Course teacher</div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <button class="out" onclick="signOut()">Sign out</button>
+  </aside>
+  <main class="main" id="view"></main>
+</div>
+
+<script>
+/* ============================================================
+   state
+   ============================================================ */
+let HOME = null, PAGE = 'home', CLASS = null;
+let SHEET = null, TAB = 'att', PENDING = {}, WHO = null;   // open class, tab, unsaved ticks, chosen student
+
+const ICON = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/></svg>'
+};
+
+const KEY = 'eee_token';
+const token = () => sessionStorage.getItem(KEY) || localStorage.getItem(KEY);   // this tab's own sign-in wins
+
+async function api(path, opts = {}){
+  opts.headers = Object.assign({}, opts.headers, {Authorization: 'Bearer ' + token()});
+  const r = await fetch(path, opts);
+  if (r.status === 401){ toLanding(); throw new Error('signed out'); }
+  return r.json();
+}
+function toLanding(){
+  localStorage.removeItem(KEY); sessionStorage.removeItem(KEY);
+  location.href = 'landing.html#enter';
+}
+async function signOut(){ try { await api('/api/signout', {method:'POST'}); } catch (e) {} toLanding(); }
+
+const view = html => { document.getElementById('view').innerHTML = html; window.scrollTo(0,0); };
+const esc = t => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+const ordinal = n => n + (['th','st','nd','rd'][n % 10 > 3 || Math.floor(n % 100 / 10) === 1 ? 0 : n % 10] || 'th');
+const initials = name => name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+
+/* ============================================================
+   sign in, then load her classes
+   ============================================================ */
+async function boot(){
+  if (!token()) return toLanding();
+  const me = await api('/api/me');
+  if (me.role !== 'teacher'){
+    location.href = {examiner:'exam.html', office:'office.html'}[me.role] || 'app.html';
+    return;
+  }
+  await load();
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('initials').textContent = initials(HOME.profile.name);
+  document.getElementById('name').textContent = HOME.profile.name;
+  document.getElementById('mail').textContent = HOME.profile.email;
+  go('home');
+}
+async function load(){ HOME = await api('/api/teach/home'); }
+boot();
+
+/* ============================================================
+   sidebar — flat: Home, then one line per class
+   ============================================================ */
+function drawNav(){
+  let h = `<button class="${PAGE==='home'?'on':''}" onclick="go('home')">${ICON.home} Home</button>`;
+  if (HOME.classes.length){
+    h += `<div class="group">MY CLASSES</div>`;
+    HOME.classes.forEach(c => {
+      h += `<button class="code ${PAGE==='class' && CLASS===c.course_id ? 'on' : ''}"
+              onclick="openClass('${c.course_id}')">${c.code}</button>`;
+    });
+  }
+  document.getElementById('nav').innerHTML = h;
+}
+
+function go(page){
+  PAGE = page;
+  drawNav();
+  if (page === 'home') return homePage();
+}
+
+function openClass(courseId){
+  PAGE = 'class'; CLASS = courseId; TAB = 'att'; PENDING = {}; WHO = null;
+  drawNav();
+  classPage(HOME.classes.find(c => c.course_id === courseId));
+}
+
+/* ============================================================
+   home — profile, classes, add a class
+   ============================================================ */
+function classCard(c, clickable){
+  const kind = c.kind === 'lab' ? 'Lab' : 'Theory';
+  const state = c.status === 'approved' ? `<span class="pill ok">approved</span>`
+              : c.status === 'waiting'  ? `<span class="pill wait">waiting for approval</span>`
+              :                           `<span class="pill no">turned down</span>`;
+  const why = c.status === 'rejected' && c.note ? `<div class="t">Office said: “${esc(c.note)}”</div>` : '';
+  return `<button class="class ${clickable ? '' : 'flat'}" ${clickable ? `onclick="openClass('${c.course_id}')"` : ''}>
+      <div class="code">${c.code}</div>
+      <h3>${esc(c.title)}</h3>
+      <div class="t">Session ${c.session} · ${ordinal(c.semester)} semester</div>
+      ${why}
+      <div class="foot">${state}
+        <span class="pill dim">${kind}</span>
+        <span class="pill dim">${c.students} student${c.students === 1 ? '' : 's'}</span></div>
+    </button>`;
+}
+
+function homePage(){
+  const p = HOME.profile;
+  const mine = HOME.classes.length
+    ? `<div class="grid">${HOME.classes.map(c => classCard(c, true)).join('')}</div>`
+    : `<div class="box"><h2>No classes yet</h2>
+        <p class="lede">Ask for a class below. The office approves it before you can open it.</p></div>`;
+  const waiting = HOME.waiting.length
+    ? `<h2 class="box-title" style="margin-top:30px;font-size:16px;font-weight:600">Asked for</h2>
+       <div class="grid">${HOME.waiting.map(c => classCard(c, false)).join('')}</div>`
+    : '';
+
+  view(`
+    <h1 class="page in">My classes</h1>
+    <p class="lede in d1">Everything you enter here is written to the chain under your name, and the student sees it in that mark's history.</p>
+
+    <section class="profile in d1">
+      <div class="big">${initials(p.name)}</div>
+      <div>
+        <h2>${esc(p.name)}</h2>
+        <div class="m">${esc(p.email)}</div>
+        <div class="m">${esc(p.teacher_id)}</div>
+      </div>
+    </section>
+
+    <div class="in d2">${mine}${waiting}</div>
+
+    <div class="box in d3">
+      <h2>Add a class</h2>
+      <p class="lede">Pick the semester, then the course and the session. The student list comes from the office's records, so there is no student count to type.</p>
+      <div class="form">
+        <div>
+          <label for="semPick">Semester</label>
+          <select id="semPick" onchange="fillCourses()"></select>
+        </div>
+        <div>
+          <label for="coursePick">Course</label>
+          <select id="coursePick"></select>
+        </div>
+        <div>
+          <label for="sessionPick">Session</label>
+          <select id="sessionPick">${HOME.sessions.map(s => `<option>${s}</option>`).join('')}</select>
+        </div>
+        <div class="row">
+          <button class="btn solid" onclick="askClass()">Ask the office</button>
+          <span class="msg" id="askMsg"></span>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot2">Your request and the office's answer both become blocks on the chain, so who was allowed to enter which marks is part of the record.</p>`);
+
+  const sem = document.getElementById('semPick');
+  sem.innerHTML = [1,2,3,4,5,6,7,8].map(n => `<option value="${n}">${ordinal(n)} semester</option>`).join('');
+  sem.value = 5;
+  fillCourses();
+}
+
+function fillCourses(){
+  const n = +document.getElementById('semPick').value;
+  const list = HOME.courses.filter(c => c.semester === n);
+  document.getElementById('coursePick').innerHTML =
+    list.map(c => `<option value="${c.course_id}">${c.code} — ${esc(c.title)}</option>`).join('')
+    || '<option value="">No courses loaded for this semester</option>';
+}
+
+async function askClass(){
+  const msg = document.getElementById('askMsg');
+  msg.className = 'msg';
+  const course_id = document.getElementById('coursePick').value;
+  if (!course_id){ msg.className = 'msg bad'; msg.textContent = 'Pick a course first.'; return; }
+  const res = await api('/api/teach/request', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({course_id, session: document.getElementById('sessionPick').value})});
+  if (!res.ok){ msg.className = 'msg bad'; msg.textContent = res.why; return; }
+  await load();
+  homePage();
+  const done = document.getElementById('askMsg');
+  done.className = 'msg good';
+  done.textContent = `Sent to the office as request #${res.request_id}.`;
+}
+
+/* ============================================================
+   one class — attendance, class tests, CATM
+   ============================================================ */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const nice = iso => { const [y,m,d] = iso.split('-'); return `${+d} ${MONTHS[+m-1]}`; };
+
+function classPage(c){
+  view(`<h1 class="page in">${c.code} — ${esc(c.title)}</h1>
+        <p class="lede in d1">Loading the class list…</p>`);
+  api(`/api/teach/class?course_id=${encodeURIComponent(c.course_id)}&session=${encodeURIComponent(c.session)}`)
+    .then(data => { SHEET = data; PENDING = {}; drawClass(); });
+}
+
+function drawClass(){
+  const c = SHEET;
+  const head = `
+    <h1 class="page in">${c.code} — ${esc(c.title)}</h1>
+    <p class="lede in d1">Session ${c.session} · ${ordinal(c.semester)} semester ·
+      ${c.kind === 'lab' ? 'Lab' : 'Theory'} · ${c.students.length} students
+      ${c.paired ? ' · groups A and B come on alternate weeks' : ''}</p>
+    <div class="tabs in d1">
+      <button class="${TAB==='att'?'on':''}" onclick="TAB='att';drawClass()">Attendance</button>
+      <button class="${TAB==='ct'?'on':''}" onclick="TAB='ct';drawClass()">${c.kind === 'lab' ? 'Lab marks' : 'Class tests'}</button>
+      <button class="${TAB==='catm'?'on':''}" onclick="TAB='catm';drawClass()">${c.kind === 'lab' ? 'Lab total' : 'CATM'}</button>
+    </div>`;
+
+  if (TAB === 'att')  return view(head + attendanceTab());
+  if (TAB === 'ct')   return view(head + marksTab());
+  view(head + catmTab());
+  if (WHO) showCatm(WHO);
+}
+
+/* ============================================================
+   class tests / lab marks
+   ============================================================ */
+function marksTab(){
+  const c = SHEET;
+  const head = c.items.map(i => `<th>
+      <div class="dt">${esc(i.label)}</div>
+      <div class="slot">${i.held_on ? nice(i.held_on) : (i.category || '').replace('_',' and ')}</div>
+      ${i.locked
+        ? `<div class="slot">out of ${i.out_of}</div>`
+        : `<div class="hbtns"><span class="slot">out of</span>
+             <input class="outof" value="${i.out_of}" inputmode="decimal"
+               onchange="setOutOf('${i.item_id}', this)"></div>`}
+    </th>`).join('');
+
+  const body = c.students.map(s => `<tr>
+      <td class="who"><div class="r">${s.roll}</div><div class="nm">${esc(s.name)}</div></td>
+      ${c.items.map(i => {
+        const m = (c.marks[s.roll] || {})[i.item_id];
+        const shown = m ? (m.absent ? 'A' : m.value) : '';
+        return `<td class="cell mark"><input data-roll="${s.roll}" data-item="${i.item_id}"
+            data-was="${shown}" data-outof="${i.out_of}" value="${shown}" inputmode="decimal"
+            class="${m && m.absent ? 'absent' : ''}${m && m.changed ? ' wasChanged' : ''}"
+            aria-label="${s.roll} ${esc(i.label)}" oninput="checkMark(this)"
+            onkeydown="nextDown(event, this)"></td>`;
+      }).join('')}</tr>`).join('');
+
+  return `
+    <div class="bar in d2">
+      <div class="key"><span><b>a number</b> the mark</span><span><b>A</b> absent</span>
+        <span><b>blank</b> not entered</span><span><b>Enter</b> next student</span></div>
+      <span class="count" id="count">No changes</span>
+      <button class="btn solid" id="saveBtn" onclick="reviewMarks()" disabled>Save to the chain</button>
+    </div>
+    <div class="sheet in d3">
+      <table><thead><tr><th class="who">Student</th>${head}</tr></thead><tbody>${body}</tbody></table>
+    </div>
+    <div id="reviewBox"></div>
+    <p class="foot2">A test's out-of can be set until its first mark is saved. After that it is fixed.
+      Changing a mark that is already in needs a reason, and the student sees it in that mark's history.</p>`;
+}
+
+function readMark(el){
+  const v = el.value.trim(), limit = +el.dataset.outof;
+  if (v === '') return {blank: true};
+  if (/^a$/i.test(v)) return {absent: true};
+  if (!/^\d+(\.\d{1,2})?$/.test(v)) return {bad: 'Not a mark'};
+  if (+v > limit) return {bad: `Above ${limit}`};
+  return {value: +v};
+}
+
+function checkMark(el){
+  const p = readMark(el);
+  el.classList.remove('bad', 'edited', 'absent');
+  if (p.bad) el.classList.add('bad');
+  else if (p.blank && el.dataset.was !== '') el.classList.add('bad');
+  else {
+    if (p.absent) el.classList.add('absent');
+    if (el.value.trim().toUpperCase() !== String(el.dataset.was).toUpperCase()) el.classList.add('edited');
+  }
+  const edited = document.querySelectorAll('.cell input.edited').length;
+  const bad = document.querySelectorAll('.cell input.bad').length;
+  document.getElementById('count').textContent =
+    bad ? `${bad} to fix` : edited ? `${edited} change${edited > 1 ? 's' : ''}` : 'No changes';
+  document.getElementById('saveBtn').disabled = !edited || bad > 0;
+}
+
+function nextDown(e, el){
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const all = [...document.querySelectorAll(`.cell input[data-item="${el.dataset.item}"]`)];
+  const next = all[all.indexOf(el) + (e.shiftKey ? -1 : 1)];
+  if (next){ next.focus(); next.select(); }
+}
+
+async function setOutOf(itemId, el){
+  const res = await api('/api/teach/out-of', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({course_id: SHEET.course_id, session: SHEET.session,
+                          item_id: itemId, out_of: el.value})});
+  if (!res.ok){ alert(res.why); }
+  await reloadClass();
+}
+
+function reviewMarks(){
+  const rows = [...document.querySelectorAll('.cell input.edited')].map(el => {
+    const p = readMark(el), s = SHEET.students.find(x => x.roll === el.dataset.roll);
+    const item = SHEET.items.find(i => i.item_id === el.dataset.item);
+    const was = el.dataset.was === '' ? '' : (el.dataset.was.toUpperCase() === 'A' ? 'Absent' : el.dataset.was);
+    const now = p.absent ? 'Absent' : p.value;
+    return `<tr><td class="mono">${el.dataset.roll}</td><td>${esc(s.name)}</td><td>${esc(item.label)}</td>
+      <td class="mono">${was ? was + ' → ' : ''}<b>${now}</b></td>
+      <td>${was
+        ? `<input class="why" data-roll="${el.dataset.roll}" data-item="${el.dataset.item}"
+             placeholder="Why is it changing?">`
+        : '<span class="pill ok">new</span>'}</td></tr>`;
+  }).join('');
+
+  document.getElementById('reviewBox').innerHTML = `<div class="change">
+      <h3>Check before saving</h3>
+      <p class="lede">Each line becomes a block signed with your name. A change keeps the old mark visible
+        to the student, so every change needs a reason.</p>
+      <table class="review"><tr><th>Roll</th><th>Name</th><th>Item</th><th>Mark</th><th>New or why</th></tr>${rows}</table>
+      <div class="row">
+        <button class="btn solid" onclick="saveMarks()">Save to the chain</button>
+        <button class="btn" onclick="document.getElementById('reviewBox').innerHTML=''">Keep editing</button>
+        <div class="msg" id="saveMsg"></div>
+      </div></div>`;
+  document.getElementById('reviewBox').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function saveMarks(){
+  const why = {};
+  document.querySelectorAll('input.why').forEach(el => { why[el.dataset.roll + '|' + el.dataset.item] = el.value; });
+  const entries = [...document.querySelectorAll('.cell input.edited')].map(el => {
+    const p = readMark(el);
+    return {roll: el.dataset.roll, item_id: el.dataset.item,
+            value: p.absent ? null : p.value, absent: !!p.absent,
+            reason: why[el.dataset.roll + '|' + el.dataset.item] || ''};
+  });
+  const res = await api('/api/teach/marks', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({course_id: SHEET.course_id, session: SHEET.session, entries})});
+  const failed = (res.results || []).filter(r => !r.ok);
+  if (failed.length){
+    document.getElementById('saveMsg').innerHTML =
+      failed.map(f => `${f.roll}: ${esc(f.why)}`).join('<br>');
+    return;
+  }
+  await reloadClass();
+}
+
+/* ============================================================
+   CATM — one student at a time, and the class chart
+   ============================================================ */
+function catmTab(){
+  const c = SHEET;
+  const picker = c.students.map(s =>
+    `<option value="${s.roll}"${WHO === s.roll ? ' selected' : ''}>${s.roll} — ${esc(s.name)}</option>`).join('');
+  return `
+    <div class="box in d2">
+      <h2>The class so far</h2>
+      <p class="lede">Class average in each test, and how full the class has been, both out of 100.</p>
+      ${classChart(c.chart)}
+    </div>
+    <div class="box in d3">
+      <h2>${c.kind === 'lab' ? 'Lab total' : 'CATM'} for one student</h2>
+      <div class="form" style="max-width:420px">
+        <select id="whoPick" onchange="showCatm(this.value)">
+          <option value="">Pick a student…</option>${picker}
+        </select>
+      </div>
+      <div id="catmOut"></div>
+    </div>`;
+}
+
+function classChart(chart){
+  const W = 760, H = 260, left = 42, right = 14, top = 18, base = 210;
+  const all = [...chart.tests.map(p => p.date), ...chart.attendance.map(p => p.date)].filter(Boolean).sort();
+  if (!all.length) return '<p class="lede">Nothing recorded yet.</p>';
+  const first = new Date(all[0]), last = new Date(all[all.length - 1]);
+  const span = Math.max(1, (last - first) / 86400000);
+  const x = d => left + ((new Date(d) - first) / 86400000 / span) * (W - left - right);
+  const y = v => base - (v / 100) * (base - top);
+
+  let g = '';
+  [0, 25, 50, 75, 100].forEach(v => {
+    g += `<line class="ggrid" x1="${left}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}"/>
+          <text class="gtxt" x="${left - 8}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+  });
+
+  const line = (points, cls) => {
+    if (!points.length) return '';
+    const pts = points.map(p => `${x(p.date)},${y(p.percent)}`).join(' ');
+    return `<polyline class="${cls}" points="${pts}"/>` +
+           points.map(p => `<circle class="${cls}-dot" cx="${x(p.date)}" cy="${y(p.percent)}" r="3.5">
+             <title>${p.label ? p.label + ' · ' : ''}${nice(p.date)} · ${p.percent}% · ${p.n} students</title></circle>`).join('');
+  };
+
+  g += line(chart.attendance, 'att');
+  g += line(chart.tests, 'ct');
+  g += `<text class="gtxt" x="${left}" y="${base + 18}">${nice(all[0])}</text>
+        <text class="gtxt" x="${W - right}" y="${base + 18}" text-anchor="end">${nice(all[all.length - 1])}</text>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img"
+      aria-label="Class average per test and class attendance, both out of 100">${g}</svg>
+    <div class="key" style="margin-top:8px">
+      <span><i style="background:var(--accent)"></i>average mark in each test</span>
+      <span><i style="background:var(--ok)"></i>how many of the class were present</span>
+    </div>`;
+}
+
+async function showCatm(roll){
+  WHO = roll;
+  const out = document.getElementById('catmOut');
+  if (!roll){ out.innerHTML = ''; return; }
+  out.innerHTML = '<p class="lede">Working it out…</p>';
+  const d = await api(`/api/teach/catm?course_id=${encodeURIComponent(SHEET.course_id)}`
+                    + `&session=${encodeURIComponent(SHEET.session)}&roll=${roll}`);
+  const a = d.attendance;
+  const row = (k, v, note) => `<div class="crow"><div class="k">${k}</div>
+      <div class="v">${v}</div><div class="n">${note || ''}</div></div>`;
+
+  let body = row('Attendance', a.percent === null ? '—' : a.percent + '%',
+                 `${a.present} of ${a.held} classes`);
+
+  if (d.kind === 'theory'){
+    const c = d.catm;
+    body += row('Attendance marks', `${c.attendance} / ${c.attendance_of}`, 'from the fixed scale');
+    d.items.filter(i => i.category === 'ct').forEach(i => {
+      const mark = i.state === 'entered' ? (i.absent ? 'Absent' : `${i.value} / ${i.out_of}`) : i.state;
+      const note = i.counted === true ? 'counted' : i.counted === false ? 'dropped' : '';
+      body += row(i.label + (i.held_on ? ' · ' + nice(i.held_on) : ''), mark, note);
+    });
+    body += row('Class tests', `${c.ct} / ${c.ct_of}`, c.ct_rule);
+    body += `<div class="crow total"><div class="k">CATM so far</div>
+        <div class="v">${c.total} / ${c.total_of}</div><div class="n">before any curve</div></div>`;
+  } else {
+    const m = d.marks, val = v => v === null ? '—' : v;
+    body += row('Quiz and viva', `${val(m.quiz_viva)} / ${m.quiz_viva_of}`, '40% of the lab');
+    body += row('Practical and reports', `${val(m.practical)} / ${m.practical_of}`, '50% of the lab');
+    body += row('Attendance marks', `${val(m.attendance)} / ${m.attendance_of}`, `group ${d.group}`);
+    body += `<div class="crow total"><div class="k">Lab total so far</div>
+        <div class="v">${m.total} / ${m.total_of}</div><div class="n"></div></div>`;
+  }
+  out.innerHTML = `<h3 style="margin-top:18px;font-size:15px">${esc(d.name)} · ${d.roll}</h3>
+                   <div class="catm">${body}</div>`;
+}
+
+/* ---------------- the attendance sheet ---------------- */
+function attendanceTab(){
+  const c = SHEET;
+  const held = c.dates.filter(d => !d.future);
+  const saved = held.filter(d => d.saved).length;
+
+  const head = c.dates.map(d => {
+    const buttons = d.saved
+      ? `<span class="pill ok" style="margin-top:6px">saved</span>`
+      : d.future
+        ? `<span class="pill dim" style="margin-top:6px">later</span>`
+        : `<div class="hbtns">
+             <button class="mini" onclick="allPresent('${d.session_id}')">✓ all</button>
+             <button class="mini save" onclick="saveDay('${d.session_id}')">Save</button></div>`;
+    return `<th class="${d.future ? 'future' : ''}">
+        <div class="dt">${nice(d.held_on)}</div>
+        <div class="slot">${d.group ? 'Group ' + d.group : esc((d.slot || '').split('·')[0].trim())}</div>
+        ${buttons}</th>`;
+  }).join('');
+
+  const body = c.students.map(s => `<tr>
+      <td class="who"><div class="r">${s.roll}</div><div class="nm">${esc(s.name)}</div></td>
+      ${c.dates.map(d => cell(d, s)).join('')}
+    </tr>`).join('');
+
+  return `
+    <div class="bar in d2">
+      <div class="key">
+        <span><i style="background:var(--ok-wash);border:1px solid var(--ok)"></i>present</span>
+        <span><i style="background:var(--bad-wash);border:1px solid var(--bad)"></i>absent</span>
+        <span><i style="box-shadow:inset 0 0 0 2px var(--edit)"></i>not saved yet</span>
+        <span><i style="background:#FAF7F4;border:1px solid var(--line)"></i>not their class that day</span>
+      </div>
+      <span style="margin-left:auto;font-size:13.5px;color:var(--grey)">${saved} of ${held.length} classes taken</span>
+    </div>
+    <div class="sheet in d3">
+      <table><thead><tr><th class="who">Student</th>${head}</tr></thead>
+      <tbody>${body}</tbody></table>
+    </div>
+    <div id="changeBox"></div>
+    <p class="foot2">Saving a class writes the whole register as one block, signed with your name.
+      Changing a tick afterwards is a separate block with your reason, and the student sees both.</p>`;
+}
+
+function cell(d, s){
+  if (d.group && d.group !== s.group)
+    return `<td class="cell off" title="Group ${d.group} has this lab on ${d.held_on}">–</td>`;
+  if (d.future) return `<td class="cell future" title="${d.held_on} hasn't happened yet"></td>`;
+
+  if (d.saved){
+    const was = d.marks[s.roll];
+    if (was === undefined) return `<td class="cell miss" title="not on that register">–</td>`;
+    const changed = d.changed.includes(s.roll) ? ' changed' : '';
+    return `<td class="cell ${was ? 'yes' : 'no'}${changed}" title="${was ? 'present' : 'absent'} · click to change it"
+              onclick="askChange('${d.session_id}','${s.roll}',${was})">${was ? '✓' : '✕'}</td>`;
+  }
+  const p = (PENDING[d.session_id] || {})[s.roll];
+  return `<td class="cell pend ${p === true ? 'yes' : p === false ? 'no' : ''}"
+            onclick="tick('${d.session_id}','${s.roll}',this)">${p === true ? '✓' : p === false ? '✕' : ''}</td>`;
+}
+
+/* blank → present → absent → blank */
+function tick(sessionId, roll, el){
+  const day = PENDING[sessionId] = PENDING[sessionId] || {};
+  const now = day[roll];
+  if (now === undefined) day[roll] = true;
+  else if (now === true) day[roll] = false;
+  else delete day[roll];
+
+  const value = day[roll];
+  el.classList.toggle('yes', value === true);
+  el.classList.toggle('no', value === false);
+  el.textContent = value === true ? '✓' : value === false ? '✕' : '';
+}
+
+function allPresent(sessionId){
+  const d = SHEET.dates.find(x => x.session_id === sessionId);
+  const day = PENDING[sessionId] = PENDING[sessionId] || {};
+  SHEET.students.forEach(s => { if (!d.group || d.group === s.group) day[s.roll] = true; });
+  keepPlace(drawClass);
+}
+
+async function saveDay(sessionId){
+  const marks = PENDING[sessionId] || {};
+  if (!Object.keys(marks).length){ alert('Tick the students first, or press “✓ all”.'); return; }
+  const res = await api('/api/teach/attendance', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({course_id: SHEET.course_id, session: SHEET.session,
+                          session_id: sessionId, marks})});
+  if (!res.ok){ alert(res.why); return; }
+  delete PENDING[sessionId];
+  await reloadClass();
+}
+
+/* ---------------- changing a saved tick ---------------- */
+function askChange(sessionId, roll, wasPresent){
+  const d = SHEET.dates.find(x => x.session_id === sessionId);
+  const s = SHEET.students.find(x => x.roll === roll);
+  const box = document.getElementById('changeBox');
+  box.innerHTML = `<div class="change">
+      <h3>Change ${esc(s.name)} (${roll}) on ${nice(d.held_on)}</h3>
+      <p class="lede">The register says <b>${wasPresent ? 'present' : 'absent'}</b>.
+        Changing it to <b>${wasPresent ? 'absent' : 'present'}</b> is written as its own block, with your reason.</p>
+      <div class="row">
+        <input id="whyChange" placeholder="Why is it changing? The student reads this.">
+        <button class="btn solid small" onclick="doChange('${sessionId}','${roll}',${!wasPresent})">Save the change</button>
+        <button class="btn small" onclick="document.getElementById('changeBox').innerHTML=''">Cancel</button>
+        <div class="msg" id="changeMsg"></div>
+      </div>
+    </div>`;
+  box.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function doChange(sessionId, roll, present){
+  const reason = document.getElementById('whyChange').value;
+  const res = await api('/api/teach/attendance/correct', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({course_id: SHEET.course_id, session: SHEET.session,
+                          session_id: sessionId, roll, present, reason})});
+  if (!res.ok){ document.getElementById('changeMsg').textContent = res.why; return; }
+  await reloadClass();
+}
+
+async function reloadClass(){
+  SHEET = await api(`/api/teach/class?course_id=${encodeURIComponent(SHEET.course_id)}`
+                  + `&session=${encodeURIComponent(SHEET.session)}`);
+  keepPlace(drawClass);
+}
+
+/* redraw without losing where you were scrolled to */
+function keepPlace(redraw){
+  const old = document.querySelector('.sheet');
+  const x = old ? old.scrollLeft : 0, y = old ? old.scrollTop : 0;
+  redraw();
+  const fresh = document.querySelector('.sheet');
+  if (fresh){ fresh.scrollLeft = x; fresh.scrollTop = y; }
+}
+</script>
+</body>
+</html>
