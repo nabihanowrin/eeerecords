@@ -209,8 +209,9 @@ details p{margin-top:8px;font-size:13.5px;line-height:1.6}
 
   <div class="frame rise d3">
     <div class="copy">
-      <h2>Your result is a record, not a rumour.</h2>
-      <p>Signed in, a student sees every mark they have been given and every change ever made to it.</p>
+      <h2>Department of Electrical and Electronic Engineering</h2>
+      <p><b id="deptYears">25 years</b> of the department: it began in September 2001 as Applied Physics and Electronics, and became Electrical and Electronic Engineering in 2017.</p>
+      <p>Sign in to see your whole academic record at a glance: marks, attendance, CATM and results, all in one place.</p>
       <div class="row">
         <a class="btn" href="#enter">Sign in</a>
         <a class="btn ghost" href="#enter" onclick="openRegister()">First time here</a>
@@ -425,6 +426,8 @@ function fill(list, render, a, b){
   document.getElementById(a).innerHTML = pool.concat(pool).map(render).join('');
   document.getElementById(b).innerHTML = other.concat(other).map(render).join('');
 }
+
+document.getElementById('deptYears').textContent = (new Date().getFullYear() - 2001) + ' years';
 
 fetch('/api/landing').then(r => r.json()).then(d => {
   drawStats(d.stats);
