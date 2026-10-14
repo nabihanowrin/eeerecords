@@ -189,6 +189,7 @@ tr:last-child td{border-bottom:none}
 .cal .d.present{background:var(--present-wash);color:var(--present);font-weight:500}
 .cal .d.absent{background:var(--absent-wash);color:var(--absent);font-weight:500}
 .cal .d.upcoming{border:1px dashed #CFC4BD;color:var(--grey)}
+.cal .d.cancelled{color:#B9AFA9;text-decoration:line-through;background:#F3EEEA}
 .cal .d.today{outline:2px solid var(--ink);outline-offset:1px}
 .cal .d .ctdot{position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:var(--ct)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--grey);margin-top:12px}
@@ -792,7 +793,7 @@ function drawMonth(el){
   for (let d = 1; d <= days; d++){
     const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const st = byDay[iso];
-    const cls = st === 'present' ? 'present' : st === 'absent' ? 'absent' : st === 'upcoming' ? 'upcoming' : st ? 'cls' : '';
+    const cls = st === 'present' ? 'present' : st === 'absent' ? 'absent' : st === 'upcoming' ? 'upcoming' : st === 'cancelled' ? 'cancelled' : st ? 'cls' : '';
     cells += `<div class="d ${cls} ${iso===TODAY?'today':''}" title="${iso}${st?' · '+st:''}${cts[iso]?' · '+cts[iso]:''}">${d}${cts[iso]?'<span class="ctdot"></span>':''}</div>`;
   }
 
@@ -807,6 +808,7 @@ function drawMonth(el){
       <span><i style="background:var(--present-wash);border:1px solid var(--present)"></i>present</span>
       <span><i style="background:var(--absent-wash);border:1px solid var(--absent)"></i>absent</span>
       <span><i style="border:1px dashed #CFC4BD"></i>upcoming</span>
+      <span><i style="background:#F3EEEA;border:1px solid #CFC4BD"></i><s>cancelled</s></span>
       <span><i style="background:var(--ct);border-radius:50%"></i>class test</span>
     </div>`;
 }

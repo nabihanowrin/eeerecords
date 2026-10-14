@@ -511,6 +511,8 @@ def save_register(teacher_id, course_id, session, session_id, marks):
     day = _dt.date.fromisoformat(held_on)
     if day > _dt.date.today():
         raise Refused("That class has not happened yet.")
+    if session_id in cancelled_classes(course_id):
+        raise Refused("This class was cancelled.")
     if session_id in registers(course_id):
         raise Refused("This class already has a register. "
                       "Change one student at a time, with a reason.")
@@ -558,6 +560,60 @@ def correct_attendance(teacher_id, course_id, session, session_id, roll, present
          "was": None if was is None else was["present"], "reason": reason.strip()},
         teacher_id,
     )
+    return block_no
+
+
+# ------------------------------------------------------------------
+# cancelling a class that hasn't happened yet — the students are emailed
+# ------------------------------------------------------------------
+def cancelled_classes(course_id):
+    """{session_id: who cancelled it and when} for one course."""
+    con = connect()
+    found = con.execute("SELECT payload, actor, created_at FROM blocks "
+                        "WHERE entry_type='class_cancelled' ORDER BY block_no").fetchall()
+    con.close()
+    out = {}
+    for text, actor, at in found:
+        p = json.loads(text)
+        if p.get("course_id") == course_id:
+            out[p["session_id"]] = {"by": actor, "at": at}
+    return out
+
+
+def cancel_class(teacher_id, course_id, session, session_id):
+    if not teacher_teaches(teacher_id, course_id, session):
+        raise Refused("The office has not given you this class.")
+    found = _class_session(course_id, session_id)
+    if not found:
+        raise Refused("That class is not in this course's timetable.")
+    held_on, slot = found
+    day = _dt.date.fromisoformat(held_on)
+    if day < _dt.date.today():
+        raise Refused("That class has already happened.")
+    if session_id in cancelled_classes(course_id):
+        raise Refused("This class is already cancelled.")
+    if session_id in registers(course_id):
+        raise Refused("Attendance was already taken for this class.")
+
+    block_no, _ = add_entry(
+        "class_cancelled",
+        {"course_id": course_id, "session": session, "session_id": session_id, "held_on": held_on},
+        teacher_id,
+    )
+
+    import mailer
+    code, title = _one("SELECT code, title FROM courses WHERE course_id=?", (course_id,))
+    when = f"{day:%A}, {day.day} {day:%B}"
+    time = (slot or "").split("·")[0].strip()
+    for s in class_list(course_id, session):
+        if not attends(s["roll"], course_id, day):
+            continue
+        email = f"{s['roll']}@{STUDENT_DOMAIN}"
+        if not _one("SELECT 1 FROM accounts WHERE email=?", (email,)):
+            continue
+        mailer.send_later(email, f"Class cancelled: {code} on {day.day} {day:%b}",
+                          f"{code} {title} on {when}" + (f" ({time})" if time else "")
+                          + " is cancelled.\n\nIt will not count towards your attendance.")
     return block_no
 
 
@@ -692,6 +748,27 @@ def objection_threads(course_id, roll, item_id):
             threads[tid]["status"] = "closed"
 
     return [threads[t] for t in order]
+
+
+def course_objections(course_id):
+    """Every objection in one course, oldest first, each with its answer if it has one."""
+    con = connect()
+    found = con.execute("SELECT block_no, payload, actor, created_at FROM blocks "
+                        "WHERE entry_type='objection' ORDER BY block_no").fetchall()
+    con.close()
+    threads = {}
+    for block_no, text, actor, at in found:
+        p = json.loads(text)
+        if p.get("course_id") != course_id:
+            continue
+        if p.get("status") == "open" and "objection_id" not in p:
+            threads[block_no] = {"id": block_no, "roll": p["roll"], "item_id": p["item_id"],
+                                 "note": p.get("note", ""), "at": at, "status": "open",
+                                 "answer": None, "answered_by": None, "answered_at": None}
+        elif p.get("status") == "closed" and p.get("objection_id") in threads:
+            threads[p["objection_id"]].update(status="closed", answer=p.get("note"),
+                                              answered_by=actor, answered_at=at)
+    return list(threads.values())
 
 
 def open_objection(course_id, roll, item_id):

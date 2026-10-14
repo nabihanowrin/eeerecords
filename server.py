@@ -78,6 +78,7 @@ def attendance_record(course_id, roll):
     # registers, corrections and the seed's older one-per-student rows, replayed
     ticks = {sid: who[roll]["present"]
              for sid, who in contract.registers(course_id).items() if roll in who}
+    cancelled = contract.cancelled_classes(course_id)
 
     out = []
     for sid, held_on, label in rows(
@@ -86,7 +87,9 @@ def attendance_record(course_id, roll):
         day = dt.date.fromisoformat(held_on)
         if not contract.attends(roll, course_id, day):
             continue
-        if sid in ticks:
+        if sid in cancelled:
+            state = "cancelled"
+        elif sid in ticks:
             state = "present" if ticks[sid] else "absent"
         elif day > today():
             state = "upcoming"
@@ -380,8 +383,10 @@ def course_progress(roll, semester):
             "SELECT c.course_id, c.code, c.title FROM courses c "
             "JOIN enrollments e ON e.course_id = c.course_id AND e.roll = ? "
             "WHERE c.semester = ? ORDER BY c.code", (roll, semester)):
-        days = [dt.date.fromisoformat(h) for (h,) in rows(
-            "SELECT held_on FROM class_sessions WHERE course_id=? ORDER BY held_on", (course_id,))]
+        cancelled = contract.cancelled_classes(course_id)
+        days = [dt.date.fromisoformat(h) for sid, h in rows(
+            "SELECT session_id, held_on FROM class_sessions WHERE course_id=? ORDER BY held_on",
+            (course_id,)) if sid not in cancelled]
         days = [d for d in days if contract.attends(roll, course_id, d)]
         if not days:
             continue
@@ -679,6 +684,7 @@ def teach_class(course_id, session):
     students = [{**s, "group": contract.lab_group(s["roll"])}
                 for s in contract.class_list(course_id, session)]
     saved = contract.registers(course_id)
+    cancelled = contract.cancelled_classes(course_id)
 
     dates = []
     for sid, held_on, topic in rows(
@@ -688,6 +694,7 @@ def teach_class(course_id, session):
         dates.append({"session_id": sid, "held_on": held_on, "slot": topic,
                       "group": attending_group(course_id, dt.date.fromisoformat(held_on)),
                       "future": held_on > today().isoformat(),
+                      "cancelled": sid in cancelled,
                       "saved": bool(marks),
                       "marks": {roll: m["present"] for roll, m in marks.items()},
                       "changed": sorted(roll for roll, m in marks.items() if m["reason"])})
@@ -701,11 +708,24 @@ def teach_class(course_id, session):
                    for item, m in got.items()}
             for roll, got in marks.items()}
 
+    names = {st["roll"]: st["name"] for st in students}
+    labels = {i: (label, limit) for i, label, limit, _, _ in teach_items(course_id)}
+    objections = []
+    for o in contract.course_objections(course_id):
+        if o["roll"] not in names:
+            continue
+        label, limit = labels.get(o["item_id"], (o["item_id"].rsplit("-", 1)[-1], None))
+        now = grid.get(o["roll"], {}).get(o["item_id"], {})
+        objections.append({**o, "name": names[o["roll"]], "label": label, "out_of": limit,
+                           "value": now.get("value"), "absent": now.get("absent", False)})
+    objections.sort(key=lambda o: (o["status"] != "open", -o["id"]))
+
     return {"course_id": course_id, "session": session, "code": code, "title": title,
             "semester": semester, "kind": kind, "credits": credits, "lab_id": lab_id,
             "paired": course_id in contract.PAIRED_LABS,
             "students": students, "dates": dates, "today": today().isoformat(),
-            "items": items, "marks": grid, "chart": teach_chart(course_id, session)}
+            "items": items, "marks": grid, "chart": teach_chart(course_id, session),
+            "objections": objections}
 
 
 def office_requests():
@@ -1196,6 +1216,7 @@ class Handler(SimpleHTTPRequestHandler):
         # ---------------- teacher and office writes ----------------
         if url.path in ("/api/teach/request", "/api/office/decide",
                         "/api/teach/attendance", "/api/teach/attendance/correct",
+                        "/api/teach/cancel", "/api/teach/objection/close",
                         "/api/teach/marks", "/api/teach/out-of",
                         "/api/office/batch", "/api/office/student"):
             body = json.loads(self.rfile.read(length) or "{}")
@@ -1215,6 +1236,16 @@ class Handler(SimpleHTTPRequestHandler):
                         tid, body.get("course_id"), body.get("session"), body.get("session_id"),
                         body.get("roll"), bool(body.get("present")), body.get("reason", ""))
                     return self.reply({"ok": True, "block_no": block_no})
+
+                if url.path == "/api/teach/cancel":
+                    block_no = contract.cancel_class(tid, body.get("course_id"), body.get("session"),
+                                                     body.get("session_id"))
+                    return self.reply({"ok": True, "block_no": block_no})
+
+                if url.path == "/api/teach/objection/close":
+                    oid = contract.close_objection(tid, body.get("course_id"), body.get("roll"),
+                                                   body.get("item_id"), body.get("outcome", ""))
+                    return self.reply({"ok": True, "objection_id": oid})
 
                 if url.path == "/api/teach/out-of":
                     block_no = contract.set_out_of(tid, body.get("course_id"), body.get("session"),
