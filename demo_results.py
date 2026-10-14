@@ -5,8 +5,9 @@ When a student registers on the demo server, this gives them a believable
 record to look at straight away:
   - a published GPA of 3.50 for every semester their batch has finished
     (every 10th student to register is lucky: 4.00, full CT marks, full attendance)
-  - for the current semester: class-test marks for the tests already held,
-    and attendance for the classes already held, so CATM is worked out
+  - for the current semester: class-test marks for the tests already held
+  - no attendance: the teacher takes it live in the demo, so every class
+    starts blank (switch sample attendance back on with SAMPLE_ATTENDANCE=1)
 
 Everything written here is signed by the actor "sample-data", so the page
 can label it clearly as sample data and nobody mistakes it for a real mark.
@@ -88,7 +89,10 @@ def give(roll, batch):
                             "value": value, "absent": False, "sample": True}, ACTOR)
         written += 1
 
-    # current semester: attendance for classes already held (about 9 in 10 present)
+    # current semester: attendance for classes already held (about 9 in 10 present).
+    # Off by default, so the teacher's sheet stays blank for a live demo.
+    if os.environ.get("SAMPLE_ATTENDANCE", "0") != "1":
+        return written
     for session_id, course_id, held_on in _rows(
             "SELECT s.session_id, s.course_id, s.held_on FROM class_sessions s "
             "JOIN courses c ON c.course_id = s.course_id "
