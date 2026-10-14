@@ -33,7 +33,11 @@ OPEN_REGISTRATION = True
 
 # While email is not set up on a server, show the code on the page instead of
 # hiding it in the server's log. Turn off (SHOW_CODE=0) once email works.
-SHOW_CODE_WHEN_EMAIL_OFF = os.environ.get("SHOW_CODE", "1") == "1"
+#   SHOW_CODE=1       show it only when email could not be sent (default)
+#   SHOW_CODE=always  show it even when it was emailed (handy for a live demo)
+#   SHOW_CODE=0       never show it
+SHOW_CODE = os.environ.get("SHOW_CODE", "1").strip().lower()
+SHOW_CODE_WHEN_EMAIL_OFF = SHOW_CODE in ("1", "always")
 
 
 # ------------------------------------------------------------------
@@ -200,6 +204,8 @@ def start_registration(email, father, mother, name=None, batch=None):
               f"(email {status}; valid {CODE_MINUTES} minutes)\n", flush=True)
         if SHOW_CODE_WHEN_EMAIL_OFF:
             return status, code
+    elif SHOW_CODE == "always":
+        return status, code
     return status, None
 
 
@@ -234,6 +240,12 @@ def finish_registration(email, code, password):
          (email, roll, "student", salt, hash_password(password, salt), _now().isoformat()))
     _run("DELETE FROM pending WHERE email=?", (email,))
     _run("DELETE FROM pending_profile WHERE email=?", (email,))
+
+    # on the demo server, a new student gets a sample record to look at
+    import demo_results
+    batch = _one("SELECT session FROM profile WHERE roll=?", (roll,))
+    if batch:
+        demo_results.give(roll, batch[0])
     return email
 
 

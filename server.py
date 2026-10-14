@@ -12,7 +12,7 @@ import json
 import os
 import hashlib
 import datetime as dt
-from urllib.parse import unquote
+from urllib.parse import unquote, quote
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -20,10 +20,19 @@ from ledger import connect, verify_chain
 from compute import read_scores
 import contract
 import auth
+import mailer
+import notices
+import complaints
+import faculty
+import resources
 from contract import Refused
 
 # a cloud host tells us which port to use; on a laptop it is 8080
 PORT = int(os.environ.get("PORT", "8080"))
+
+# the office's "simulate an insider edit" buttons, for showing tamper
+# detection on a server where nobody can open a terminal. DEMO_TAMPER=0 hides them.
+DEMO_TAMPER = os.environ.get("DEMO_TAMPER", "1") == "1"
 
 # first start on a fresh machine (e.g. a cloud server): begin from the
 # anonymous demo database, so no real student data ever leaves a laptop
@@ -232,7 +241,8 @@ def course_block(course_id, roll):
 
     sem = rows("SELECT semester FROM courses WHERE course_id=?", (course_id,))[0][0]
     block = {"course_id": course_id, "code": code, "title": title, "kind": kind,
-             "credits": credits, "teacher": teacher, "items": items, "semester": sem,
+             "credits": credits, "teacher": course_teachers(course_id, teacher, roll),
+             "items": items, "semester": sem,
              "full": full, "result": published_result(course_id, roll),
              "attendance": {"summary": att, "sessions": record}}
 
@@ -363,6 +373,40 @@ def semester_view(roll):
 # ------------------------------------------------------------------
 # home page
 # ------------------------------------------------------------------
+def course_progress(roll, semester):
+    """For each course this semester: how many of its classes are done and how many are left."""
+    out = []
+    for course_id, code, title in rows(
+            "SELECT c.course_id, c.code, c.title FROM courses c "
+            "JOIN enrollments e ON e.course_id = c.course_id AND e.roll = ? "
+            "WHERE c.semester = ? ORDER BY c.code", (roll, semester)):
+        days = [dt.date.fromisoformat(h) for (h,) in rows(
+            "SELECT held_on FROM class_sessions WHERE course_id=? ORDER BY held_on", (course_id,))]
+        days = [d for d in days if contract.attends(roll, course_id, d)]
+        if not days:
+            continue
+        done = sum(1 for d in days if d <= today())
+        out.append({"course_id": course_id, "code": code, "title": title, "done": done,
+                    "total": len(days), "left": len(days) - done,
+                    "percent": round(100 * done / len(days)), "last": days[-1].isoformat()})
+    return out
+
+
+FEES = {"odd": 1200, "even": 800}
+SONALI_LINK = "https://billpay.sonalibank.com.bd/cufee"
+
+
+def payments_view(roll):
+    """The semester final exam fee for each semester so far. Not connected to the bank:
+    finished semesters are shown as paid (sample), the current one as not paid yet."""
+    st = standing(roll)
+    out = []
+    for n in range(1, min(st["current"], 8) + 1):
+        out.append({"semester": n, "amount": FEES["odd" if n % 2 else "even"],
+                    "paid": n < st["current"]})
+    return {"fees": out, "link": SONALI_LINK, "currency": "Tk"}
+
+
 def home_view(roll):
     name = rows("SELECT name FROM students WHERE roll=?", (roll,))[0][0]
     p = rows("SELECT student_id, session, father_en, father_bn, mother_en, mother_bn, photo "
@@ -397,7 +441,11 @@ def home_view(roll):
                     "SELECT id, title, summary, year, image, verified_by, verified_at "
                     "FROM projects WHERE roll=? ORDER BY year DESC, id DESC", (roll,))]
 
+    import demo_results
     return {"profile": profile, "semesters": semesters, "standing": st,
+            "sample": demo_results.has_sample(roll),
+            "progress": course_progress(roll, st["current"]),
+            "warnings": complaints.warnings(roll),
             "cgpa": round(pts / creds, 2) if creds else None,
             "credits_done": creds, "projects": projects}
 
@@ -437,6 +485,7 @@ def landing_view():
     stats = [{"key": k, "label": l, "value": v, "note": n}
              for k, l, v, n in rows("SELECT key, label, value, note FROM stats ORDER BY rowid")]
     return {"achievements": ach, "gallery": pics, "stats": stats,
+            "faculty": faculty.listing(), "contact": faculty.CONTACT,
             "batches": auth.batches(), "open_registration": auth.OPEN_REGISTRATION}
 
 
@@ -477,9 +526,26 @@ def exam_grid(session, semester):
 # ------------------------------------------------------------------
 # teacher and office views
 # ------------------------------------------------------------------
+DEMO_STAFF_NAMES = {"sabrina.demo@cu.ac.bd": "Sabrina Alam"}
+
+
 def staff_name(email):
-    """No name is kept for staff, so make a readable one from the email."""
-    return email.split("@")[0].replace(".demo", "").replace(".", " ").title()
+    """The faculty list's name for this email, or a readable one made from the email."""
+    return (faculty.by_email(email) or DEMO_STAFF_NAMES.get((email or "").lower())
+            or email.split("@")[0].replace(".demo", "").replace(".", " ").title())
+
+
+def course_teachers(course_id, default, roll):
+    """The course's listed teachers, plus anyone the office has approved for this student's batch."""
+    names = [n.strip() for n in (default or "").split("/") if n.strip()]
+    session = rows("SELECT session FROM profile WHERE roll=?", (roll,))
+    for (email,) in rows("SELECT a.email FROM teaching t JOIN accounts a ON 'teacher:' || a.roll = t.teacher_id "
+                         "WHERE t.course_id=? AND (t.session IS NULL OR t.session=?)",
+                         (course_id, session[0][0] if session else None)):
+        name = staff_name(email)
+        if name not in names:
+            names.append(name)
+    return " / ".join(names) or None
 
 
 def class_card(course_id, session, status="approved", request_id=None, note=""):
@@ -646,7 +712,8 @@ def office_requests():
     out = []
     for r in contract.class_requests():
         card = class_card(r["course_id"], r["session"], r["status"], r["id"], r["note"])
-        card["teacher"] = staff_name(r["teacher_id"].replace("teacher:", ""))
+        acct = rows("SELECT email FROM accounts WHERE 'teacher:' || roll = ?", (r["teacher_id"],))
+        card["teacher"] = staff_name(acct[0][0] if acct else r["teacher_id"].replace("teacher:", ""))
         card["teacher_id"] = r["teacher_id"]
         card["asked_at"] = r["asked_at"]
         card["decided_by"] = r["decided_by"]
@@ -705,26 +772,14 @@ def owned_file(roll, path=None, locker_id=None):
     return path if os.path.isfile(path) else None
 
 
-# ------------------------------------------------------------------
-# resources — placeholders until teachers upload their own
-# ------------------------------------------------------------------
-BOOKS = {
-    "EEE511-2026": [("Digital Design", "M. Morris Mano")],
-    "EEE513-2026": [("Communication Systems", "Simon Haykin")],
-    "EEE515-2026": [("Engineering Electromagnetics", "W. H. Hayt, J. A. Buck")],
-    "CSE517-2026": [("Computer Networks", "A. S. Tanenbaum")],
-    "EEE519-2026": [("Principles of Power System", "V. K. Mehta")],
-}
-
-
-def resources(course_id):
-    return {
-        "note": "Suggested titles only — each teacher replaces this with their own list. "
-                "Books are listed with where to find them, not as downloads.",
-        "books": [{"title": t, "author": a} for t, a in BOOKS.get(course_id, [])],
-        "papers": [{"year": y, "status": "not uploaded yet"} for y in (2025, 2024, 2023)],
-        "cts": [{"label": f"CT{n}", "year": 2025, "status": "not uploaded yet"} for n in (1, 2, 3, 4)],
-    }
+def display_name(user):
+    """How a person is shown next to a file they shared."""
+    if user["role"] == "student":
+        found = rows("SELECT name FROM students WHERE roll=?", (user["roll"],))
+        return found[0][0] if found else user["roll"]
+    if user["role"] == "teacher":
+        return staff_name(user["email"])
+    return "Department office" if user["role"] == "office" else user["email"]
 
 
 # ------------------------------------------------------------------
@@ -827,10 +882,34 @@ class Handler(SimpleHTTPRequestHandler):
             return self.reply({"ok": True, "role": user["role"], "roll": roll,
                                "email": user["email"], "name": name[0][0] if name else roll})
 
+        # course resources: anyone in the course, its teachers and the office
+        if url.path == "/api/resources":
+            if not resources.can_see(user, one("course_id")):
+                return self.reply({"ok": False, "why": "You are not in this course."}, 403)
+            return self.reply(resources.listing(user, one("course_id")))
+        if url.path == "/api/resource":
+            found = resources.open_file(user, int(one("id") or 0))
+            if not found:
+                return self.reply({"ok": False, "why": "Not found."}, 404)
+            path, filename, kind = found
+            with open(path, "rb") as f:
+                data = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", kind)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Filename", quote(filename))
+            self.send_header("Cache-Control", "private, no-store")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
         # anyone signed in may check the chain — that is what it is for
         if url.path == "/api/verify":
             ok, message = verify_chain()
-            return self.reply({"ok": ok, "message": message})
+            alerts = notices.check_now()          # email anyone affected, right away
+            return self.reply({"ok": ok, "message": message, "alerts": alerts,
+                               "email": mailer.method()})
 
         # ---------------- examiner ----------------
         if url.path.startswith("/api/exam/"):
@@ -867,6 +946,33 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply({"ok": False, "why": "The office only."}, 403)
             if url.path == "/api/office/requests":
                 return self.reply(office_requests())
+            if url.path == "/api/office/faculty":
+                have = {e for (e,) in rows("SELECT email FROM accounts WHERE role='teacher'")}
+                return self.reply({"faculty": [{**f, "has_account": f["email"].lower() in have,
+                                                "can_have": f["email"].lower().endswith("@cu.ac.bd")}
+                                               for f in faculty.listing()]})
+            if url.path == "/api/office/complaints":
+                return self.reply({"complaints": complaints.for_office()})
+            if url.path == "/api/office/complaint-photo":
+                path = complaints.photo_path(int(one("id") or 0))
+                if not path:
+                    return self.reply({"ok": False, "why": "No photo."}, 404)
+                with open(path, "rb") as f:
+                    data = f.read()
+                kinds = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+                self.send_response(200)
+                self.send_header("Content-Type", kinds.get(os.path.splitext(path)[1].lower(), "application/octet-stream"))
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "private, no-store")
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            if url.path == "/api/office/demo":
+                import demo_tamper
+                return self.reply({"enabled": DEMO_TAMPER,
+                                   "tampered": os.path.exists(demo_tamper.KEPT),
+                                   "email": mailer.method(),
+                                   "office_email": mailer.office_address()})
             if url.path == "/api/office/batches":
                 return self.reply({"batches": contract.batches()})
             if url.path == "/api/office/students":
@@ -914,11 +1020,14 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(data)
             return
 
+        if url.path == "/api/payments":
+            return self.reply(payments_view(roll))
+
+        if url.path == "/api/complaints":
+            return self.reply({"complaints": complaints.mine(roll), "warnings": complaints.warnings(roll)})
+
         if url.path == "/api/locker":
             return self.reply({"files": locker_list(roll, one("course_id"))})
-
-        if url.path == "/api/resources":
-            return self.reply(resources(one("course_id")))
 
         return self.reply({"ok": False, "why": "No such endpoint."}, 404)
 
@@ -971,6 +1080,26 @@ class Handler(SimpleHTTPRequestHandler):
             auth.sign_out(token)
             return self.reply({"ok": True})
 
+        if url.path == "/api/resources/upload":
+            try:
+                if length > resources.MAX_FILE:
+                    raise Refused(f"Files must be under {resources.MAX_FILE // (1024 * 1024)} MB.")
+                data = self.rfile.read(length)
+                new_id = resources.add(user, display_name(user), one("course_id"), one("category"),
+                                       unquote(self.headers.get("X-Filename", "")),
+                                       unquote(self.headers.get("X-Title", "")), data)
+                return self.reply({"ok": True, "id": new_id})
+            except Refused as why:
+                return self.reply({"ok": False, "why": str(why)}, 400)
+
+        if url.path == "/api/resources/remove":
+            body = json.loads(self.rfile.read(length) or "{}")
+            try:
+                resources.remove(user, int(body.get("id") or 0))
+                return self.reply({"ok": True})
+            except Refused as why:
+                return self.reply({"ok": False, "why": str(why)}, 400)
+
         if url.path == "/api/exam/publish":
             if user["role"] != "examiner":
                 return self.reply({"ok": False, "why": "Examiners only."}, 403)
@@ -996,6 +1125,73 @@ class Handler(SimpleHTTPRequestHandler):
                     results.append({"course_id": e.get("course_id"), "roll": e.get("roll"),
                                     "ok": False, "why": str(why)})
             return self.reply({"ok": all(r["ok"] for r in results), "results": results})
+
+        if url.path == "/api/office/add-teacher":
+            if user["role"] != "office":
+                return self.reply({"ok": False, "why": "The office only."}, 403)
+            body = json.loads(self.rfile.read(length) or "{}")
+            email = (body.get("email") or "").strip().lower()
+            if not faculty.by_email(email):
+                return self.reply({"ok": False, "why": "That email is not on the faculty list."}, 400)
+            if rows("SELECT 1 FROM accounts WHERE email=?", (email,)):
+                return self.reply({"ok": False, "why": "That teacher already has an account."}, 400)
+            import secrets
+            password = "teach-" + secrets.token_urlsafe(6).replace("-", "x").replace("_", "y")
+            try:
+                auth.create_staff_account(email, "teacher", password)
+            except Refused as why:
+                return self.reply({"ok": False, "why": str(why)}, 400)
+            from ledger import add_entry
+            add_entry("staff_account", {"email": email, "role": "teacher"}, f"office:{user['email']}")
+            return self.reply({"ok": True, "email": email, "password": password})
+
+        if url.path == "/api/office/complaint-flag":
+            if user["role"] != "office":
+                return self.reply({"ok": False, "why": "The office only."}, 403)
+            body = json.loads(self.rfile.read(length) or "{}")
+            try:
+                return self.reply({"ok": True, "block_no": complaints.flag(user["email"], int(body.get("id") or 0))})
+            except Refused as why:
+                return self.reply({"ok": False, "why": str(why)}, 400)
+
+        # ---------------- demo: an insider edit, and putting it back ----------------
+        if url.path in ("/api/office/demo-tamper", "/api/office/demo-undo"):
+            if user["role"] != "office":
+                return self.reply({"ok": False, "why": "The office only."}, 403)
+            if not DEMO_TAMPER:
+                return self.reply({"ok": False, "why": "The demo is switched off."}, 403)
+            import demo_tamper
+            if url.path.endswith("tamper"):
+                if os.path.exists(demo_tamper.KEPT):
+                    return self.reply({"ok": False, "why": "A record is already changed. Put it back first."}, 400)
+                row = demo_tamper.latest_mark()
+                if not row:
+                    return self.reply({"ok": False, "why": "No marks yet. Enter one as a teacher first."}, 400)
+                block_no, text = row
+                before = json.loads(text)
+                after = dict(before)
+                after["value"] = (before.get("value") or 0) + 5
+                with open(demo_tamper.KEPT, "w", encoding="utf-8") as f:
+                    json.dump({"block_no": block_no, "payload": text}, f)
+                con = connect()
+                con.execute("UPDATE blocks SET payload=? WHERE block_no=?",
+                            (json.dumps(after, sort_keys=True, separators=(",", ":")), block_no))
+                con.commit()
+                con.close()
+                return self.reply({"ok": True, "block_no": block_no, "roll": before.get("roll"),
+                                   "item_id": before.get("item_id"),
+                                   "was": before.get("value"), "now": after["value"]})
+            if not os.path.exists(demo_tamper.KEPT):
+                return self.reply({"ok": False, "why": "Nothing to put back."}, 400)
+            with open(demo_tamper.KEPT, encoding="utf-8") as f:
+                kept = json.load(f)
+            con = connect()
+            con.execute("UPDATE blocks SET payload=? WHERE block_no=?", (kept["payload"], kept["block_no"]))
+            con.commit()
+            con.close()
+            os.remove(demo_tamper.KEPT)
+            notices.check_now()                   # chain is whole again: refresh the watchdog
+            return self.reply({"ok": True, "block_no": kept["block_no"]})
 
         # ---------------- teacher and office writes ----------------
         if url.path in ("/api/teach/request", "/api/office/decide",
@@ -1087,6 +1283,16 @@ class Handler(SimpleHTTPRequestHandler):
             except Refused as why:
                 return self.reply({"ok": False, "why": str(why)}, 400)
 
+        if url.path == "/api/complaint/photo":
+            try:
+                if length > contract.MAX_UPLOAD:
+                    raise Refused("The photo must be under 5 MB.")
+                data = self.rfile.read(length)
+                complaints.add_photo(roll, int(one("id") or 0), unquote(self.headers.get("X-Filename", "")), data)
+                return self.reply({"ok": True})
+            except Refused as why:
+                return self.reply({"ok": False, "why": str(why)}, 400)
+
         if url.path == "/api/upload":
             try:
                 if length > contract.MAX_UPLOAD:
@@ -1111,6 +1317,10 @@ class Handler(SimpleHTTPRequestHandler):
                 con.commit()
                 con.close()
                 return self.reply({"ok": True})
+
+            if url.path == "/api/complaint":
+                cid = complaints.file(roll, body.get("what"), body.get("why"), body.get("fix"))
+                return self.reply({"ok": True, "id": cid})
 
             if url.path == "/api/project":
                 new_id = contract.add_project(roll, body.get("title"),
@@ -1139,6 +1349,9 @@ class Handler(SimpleHTTPRequestHandler):
 
 init_locker()
 contract.init_teaching()
+complaints.init()
+resources.init()
+faculty.apply_course_teachers(connect)
 
 def my_address():
     """This laptop's address on the Wi-Fi, so other people can be told it.
@@ -1157,6 +1370,7 @@ def my_address():
 
 if __name__ == "__main__":
     auth.init_auth()
+    every = notices.start()
     here = my_address()
     print(f"\n  On this laptop : http://localhost:{PORT}/landing.html")
     if here:
@@ -1164,6 +1378,7 @@ if __name__ == "__main__":
         print("                   (give that one to anyone on the same network)")
     else:
         print("  Not on a network right now, so only this laptop can open it.")
+    print(f"\n  Email: {mailer.method() or 'off'} · watchdog checks the chain every {every:g} min")
     print("\n  Press Ctrl+C to stop.\n")
 
     # 0.0.0.0 means every network card, not just this laptop

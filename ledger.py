@@ -90,6 +90,11 @@ def compute_hash(block_no, entry_type, payload, actor, created_at, prev_hash):
     return hashlib.sha256(material.encode()).hexdigest()
 
 
+# functions to call after a block is written (the watchdog uses this to
+# remember every record the moment the website saves it)
+ON_ADD = []
+
+
 def add_entry(entry_type, payload, actor):
     con = connect()
     cur = con.cursor()
@@ -124,6 +129,11 @@ def add_entry(entry_type, payload, actor):
 
     con.commit()
     con.close()
+    for hook in ON_ADD:
+        try:
+            hook(block_no, json.dumps(payload, sort_keys=True, separators=(",", ":")))
+        except Exception:
+            pass
     return block_no, block_hash
 
 

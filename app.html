@@ -103,6 +103,14 @@ button{font-family:inherit}
 .lockrow small{color:var(--grey);font-size:12px}
 .lockrow .pdf{font-size:11px;font-weight:700;background:#F8E3E5;color:#A4343F;padding:6px 8px;border-radius:8px}
 .btn.small{padding:7px 14px;font-size:13px}
+.shelfhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.shelfhead h2{margin:0}
+.shelfhead .btn{margin-left:auto}
+.lockrow .pdf.sug{background:#EAF0F3;color:#3D5566}
+.upload{margin-top:14px;padding:16px 18px;border:1px dashed var(--line);border-radius:14px;background:var(--cream)}
+.upload select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14.5px;background:#fff;min-width:260px;max-width:100%}
+.upload input[type=file]{font:inherit;font-size:14px}
+@media (max-width:640px){.lockrow{flex-wrap:wrap}.lockrow div{flex-basis:calc(100% - 60px)}}
 .locker .msg{margin-left:12px;font-size:13px;color:#A4343F}
 .nav .group{font-size:11px;letter-spacing:.1em;color:#6F8290;padding:10px 18px 3px}
 .side .out{margin:auto 24px 0;background:none;border:1px solid #3A4A55;color:var(--side-text);border-radius:30px;padding:9px;font-size:13px;cursor:pointer}
@@ -224,6 +232,27 @@ tr:last-child td{border-bottom:none}
 .me .dot img{width:100%;height:100%;border-radius:50%;object-fit:cover}
 
 .hello{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.fees{width:100%;border-collapse:collapse}.fees th,.fees td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:14.5px}
+.paid{display:inline-block;padding:4px 10px;border-radius:99px;background:#E3F1E7;color:#22603A;font-size:13px;font-weight:600}
+.unpaid{display:inline-block;padding:4px 10px;border-radius:99px;background:#FBE5E8;color:#8A1E2E;font-size:13px;font-weight:600;margin-right:10px}
+.paybtn{display:inline-block;margin-top:6px;padding:7px 14px;font-size:13px;text-decoration:none}
+.notice{margin-top:16px;padding:14px 18px;border-radius:12px;background:#FFF4D6;border:1px solid #F0D58A;color:#5C4600;font-size:14px;line-height:1.55}
+.notice.bad{background:#FBE5E8;border-color:#EBB3BC;color:#8A1E2E}
+.field{margin-top:14px}.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.field input,.field textarea{width:100%;max-width:620px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14.5px;background:#fff}
+.box .btn.solid{margin-top:14px}
+.msg{margin-top:10px;color:#8A1E2E;font-size:14px}
+.okhead{color:#1F6B47}
+.mylist{list-style:none;padding:0}.mylist li{padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.sent,.flagged{margin-left:8px;font-size:12px;padding:3px 8px;border-radius:99px;background:#E3F1E7;color:#22603A}
+.flagged{background:#FBE5E8;color:#8A1E2E}
+.progress .prow{display:grid;grid-template-columns:minmax(150px,1.2fr) 2fr minmax(170px,1fr);gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.progress .pname span{display:block;font-size:12.5px;color:var(--grey)}
+.progress .pbar{height:10px;border-radius:99px;background:#ECE7E2;overflow:hidden}.progress .pbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.progress .pnum{font-size:13px;color:var(--grey)}
+@media (max-width:640px){.progress .prow{grid-template-columns:1fr}}
+.tiny{font-size:12.5px;color:var(--grey);line-height:1.5}
+.samplenote{margin:14px 0 4px;padding:12px 16px;border-radius:12px;background:#FFF4D6;border:1px solid #F0D58A;color:#5C4600;font-size:14px;line-height:1.5}
 .hello .date{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;text-align:center;font-size:12px;color:var(--grey)}
 .hello .date b{display:block;font-size:13px;color:var(--ink)}
 
@@ -354,6 +383,7 @@ const ICON = {
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
   time:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
   book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg>',
+  flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
   pay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="3"/><path d="M2 10h20M6 15h4"/></svg>'
 };
 
@@ -407,6 +437,7 @@ boot();
    ============================================================ */
 function drawNav(){
   let h = `<button class="${PAGE==='home'?'on':''}" onclick="go('home')">${ICON.home} Home</button>
+           <button class="${PAGE==='complaint'?'on':''}" onclick="go('complaint')">${ICON.flag} Complaint box</button>
            <div class="group">SEMESTERS</div>`;
   SEM.semesters.forEach(sm => {
     const open = OPEN.has(sm.n);
@@ -440,6 +471,7 @@ function go(page){
   if (page === 'courses')   return coursesPage();
   if (page === 'timetable') return timetablePage();
   if (page === 'payment')   return paymentPage();
+  if (page === 'complaint') return complaintPage();
 }
 
 const view = html => { const v = document.getElementById('view'); v.innerHTML = html; window.scrollTo(0,0); hydrate(v); };
@@ -765,34 +797,90 @@ function shift(btn, step){
    ============================================================ */
 async function resourcesTab(head, b){
   const r = await api(`/api/resources?course_id=${b.course_id}`);
-  const books = r.books.map((k,i) => `
-    <div class="book in d${Math.min(i+1,4)}">
-      <div class="cover"><b>${k.title}</b><span>${k.author}</span></div>
-      <div class="info">Available from the seminar library — ask at the department office</div>
-    </div>`).join('') || '<p class="lede">No books listed yet.</p>';
-  const papers = r.papers.map((p,i) => `
-    <div class="paper in d${Math.min(i+1,4)}"><div class="yr">${p.year}</div><div class="t">Final exam questions</div><span class="pill dim" style="margin-top:12px">${p.status}</span></div>`).join('');
-  const cts = r.cts.map((p,i) => `
-    <div class="paper in d${Math.min(i+1,4)}"><div class="yr">${p.label}</div><div class="t">${p.year} questions</div><span class="pill dim" style="margin-top:12px">${p.status}</span></div>`).join('');
+  const mb = n => n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+  const shelf = c => {
+    const rows = c.files.map(f => `<div class="lockrow"><span class="pdf">${f.type}</span>
+        <div><b>${esc(f.title)}</b><small>${esc(f.by)}${f.teacher ? ' (teacher)' : ''} · ${mb(f.size)} · ${when(f.at)}</small></div>
+        <button class="btn ghost small" onclick="openRes(${f.id})">Open</button>
+        ${f.can_remove ? `<button class="btn ghost small" onclick="dropRes(${f.id})">Remove</button>` : ''}</div>`).join('');
+    const books = c.key === 'books' ? r.suggested.map(k => `<div class="lockrow"><span class="pdf sug">BOOK</span>
+        <div><b>${esc(k.title)}</b><small>${esc(k.author)} · suggested textbook, ask at the seminar library</small></div></div>`).join('') : '';
+    return `<div class="box in d2 shelfbox" id="shelf-${c.key}">
+      <div class="shelfhead"><h2>${c.label}</h2><span class="pill dim">${c.files.length}</span>
+        ${r.can_add ? `<button class="btn ghost small" onclick="showUpload('${c.key}')">+ Add</button>` : ''}</div>
+      <div class="lockrows">${rows}${books || (rows ? '' : '<p class="lede">Nothing uploaded yet.</p>')}</div></div>`;
+  };
+  const options = r.categories.map(c => `<option value="${c.key}">${c.label}</option>`).join('');
 
   const mine = (await api(`/api/locker?course_id=${b.course_id}`)).files;
-  const mb = n => n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
   const files = mine.map(f => `<div class="lockrow"><span class="pdf">PDF</span>
       <div><b>${esc(f.name)}</b><small>${mb(f.size)} · added ${when(f.at)}</small></div>
       <button class="btn ghost small" onclick="openFile(${f.id})">Open</button>
       <button class="btn ghost small" onclick="dropFile(${f.id})">Delete</button></div>`).join('')
     || '<p class="lede">Nothing here yet.</p>';
   view(head + `
-    <div class="box in d2 locker"><h2>My private files</h2>
-      <p class="lede"><b>Only you can see these.</b> No one else — not teachers, not classmates — can open them, and there is no way to share them. PDFs only, up to 30 MB each, 200 MB in total.</p>
+    <div class="box in d1"><div class="shelfhead"><h2>Course resources</h2>
+      ${r.can_add ? `<button class="btn solid small" onclick="showUpload()">Upload</button>` : ''}</div>
+      <p class="lede">Shared with everyone taking ${esc(b.code)} and its teachers. Each file's fingerprint is kept on the record, so a question paper can't be quietly swapped later.</p>
+      <div class="upload" id="upBox" hidden>
+        <div class="field"><label>1. Choose a file from your device</label>
+          <input type="file" id="upFile" accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.pptx" onchange="upPicked()"></div>
+        <div class="field"><label>2. What type of file is this?</label>
+          <select id="upCat"><option value="">Choose one…</option>${options}</select></div>
+        <div class="field"><label>3. Title <span class="tiny">(optional, e.g. "CT 2 — 2025" or "Chapter 3 notes")</span></label>
+          <input id="upTitle" maxlength="120"></div>
+        <p class="tiny" style="margin-top:10px">${r.types.join(', ')} · up to ${r.max_mb} MB · your name is shown next to the file.</p>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn solid" onclick="sendRes('${b.course_id}')">Upload</button>
+          <button class="btn ghost" onclick="document.getElementById('upBox').hidden=true">Cancel</button>
+          <span class="msg" id="upMsg"></span></div>
+      </div></div>
+    ${r.categories.map(shelf).join('')}
+    <div class="box in d3 locker"><h2>My private files</h2>
+      <p class="lede"><b>Only you can see these.</b> No one else — not teachers, not classmates — can open them. PDFs only, up to 30 MB each, 200 MB in total.</p>
       <label class="btn" style="margin-top:12px;display:inline-block">Add a PDF
         <input type="file" accept="application/pdf,.pdf" hidden onchange="addFile(this, '${b.course_id}')"></label>
       <span class="msg" id="lockMsg"></span>
-      <div class="lockrows">${files}</div></div>
-    <p class="lede in d2" style="margin-top:18px">${r.note}</p>
-    <div class="box in d2"><h2>Books</h2><div class="shelf">${books}</div></div>
-    <div class="box in d3"><h2>Previous final questions</h2><div class="shelf">${papers}</div></div>
-    <div class="box in d4"><h2>Class test questions</h2><div class="shelf">${cts}</div></div>`);
+      <div class="lockrows">${files}</div></div>`);
+}
+
+function showUpload(cat){
+  const box = document.getElementById('upBox');
+  box.hidden = false;
+  if (cat) document.getElementById('upCat').value = cat;
+  document.getElementById('upMsg').textContent = '';
+  box.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function upPicked(){
+  const f = document.getElementById('upFile').files[0], t = document.getElementById('upTitle');
+  if (f && !t.value) t.value = f.name.replace(/\.[^.]+$/, '');
+}
+async function sendRes(courseId){
+  const file = document.getElementById('upFile').files[0], cat = document.getElementById('upCat').value;
+  const msg = document.getElementById('upMsg');
+  if (!file){ msg.textContent = 'Choose a file first.'; return; }
+  if (!cat){ msg.textContent = 'Choose what type of file it is.'; return; }
+  msg.textContent = 'Uploading…';
+  const r = await fetch(`/api/resources/upload?course_id=${encodeURIComponent(courseId)}&category=${cat}`, {method:'POST',
+    headers:{Authorization:'Bearer ' + token(), 'X-Filename': encodeURIComponent(file.name),
+             'X-Title': encodeURIComponent(document.getElementById('upTitle').value), 'Content-Type':'application/octet-stream'},
+    body:file});
+  const res = await r.json().catch(() => ({ok:false, why:'The upload failed. Please try again.'}));
+  if (!res.ok){ msg.textContent = res.why; return; }
+  await drawCourse();
+  const shelf = document.getElementById('shelf-' + cat);
+  if (shelf) shelf.scrollIntoView({behavior:'smooth', block:'center'});
+}
+async function openRes(id){
+  const tab = window.open('', '_blank');
+  try { tab.location = await fileURL(`/api/resource?id=${id}`); }
+  catch (e) { tab.close(); alert('That file could not be opened.'); }
+}
+async function dropRes(id){
+  if (!confirm('Remove this file for everyone in the course?')) return;
+  const res = await api('/api/resources/remove', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+  if (!res.ok) alert(res.why);
+  drawCourse();
 }
 
 async function addFile(input, courseId){
@@ -862,17 +950,77 @@ function timetablePage(){
 }
 
 /* ============================================================
-   payment — placeholder
+   payment — the semester final exam fee
    ============================================================ */
-function paymentPage(){
+async function paymentPage(){
+  const d = await api('/api/payments');
+  const rowsHtml = d.fees.map(f => `<tr>
+      <td><b>${ordinal(f.semester)} semester</b> final exam</td>
+      <td class="mono">${d.currency} ${f.amount.toLocaleString('en-US')}</td>
+      <td>${f.paid
+        ? '<span class="paid">Paid</span>'
+        : `<span class="unpaid">Not paid yet</span>
+           <a class="btn solid paybtn" href="${d.link}" target="_blank" rel="noopener">Pay at Sonali Bank</a>`}</td></tr>`).join('');
   view(`
     <h1 class="page in">Payment</h1>
-    <div class="box in d1">
-      <h2>Not connected</h2>
-      <p class="lede">Fees are handled by the university's finance office. This page will stay empty until that office agrees to share payment records.</p>
+    <p class="lede in d1">The fee for each semester's final exam: Tk 1,200 in an odd semester, Tk 800 in an even one.
+      Pay online through Sonali Bank, where you can also print the receipt.</p>
+    <div class="box in d2">
+      <table class="fees"><tr><th>Semester</th><th>Amount</th><th>Status</th></tr>${rowsHtml}</table>
+      <p class="tiny" style="margin-top:12px">Sample: this page is not connected to the bank yet, so finished semesters are shown as paid.</p>
     </div>`);
 }
 
+/* ============================================================
+   complaint box — department facilities only
+   ============================================================ */
+async function complaintPage(){
+  const d = await api('/api/complaints');
+  const mine = d.complaints.map(c => `<li><b>#${c.id}</b> ${esc(c.what)} <span class="tiny">· ${when(c.at)}</span>
+      ${c.flagged ? '<span class="flagged">Flagged as unnecessary</span>' : '<span class="sent">Sent</span>'}</li>`).join('');
+  view(`
+    <h1 class="page in">Complaint box</h1>
+    <div class="notice in d1"><b>For department facilities only.</b> Use this when something in the department's
+      buildings or equipment is broken or uncomfortable: a fan that doesn't work, a projector, lights, water, a leaking room.
+      It is not for complaints about teachers, staff or other students.
+      <br><b>Warning:</b> the office can flag a complaint as unnecessary, and the account that sent it is then warned.</div>
+    ${d.warnings ? `<div class="notice bad in d1">${d.warnings} of your complaints ${d.warnings === 1 ? 'was' : 'were'} flagged as unnecessary.</div>` : ''}
+    <div class="box in d2" id="cform">
+      <div class="field"><label for="cWhat">What is the problem, and where?</label>
+        <input id="cWhat" maxlength="200" placeholder="e.g. The projector in Room 215 doesn't turn on"></div>
+      <div class="field"><label for="cWhy">Why is it a problem?</label>
+        <textarea id="cWhy" rows="3" placeholder="e.g. Teachers can't show slides, so classes are delayed"></textarea></div>
+      <div class="field"><label for="cFix">What should be fixed?</label>
+        <textarea id="cFix" rows="3" placeholder="e.g. Repair or replace the projector"></textarea></div>
+      <div class="field"><label for="cPhoto">Photo (optional)</label>
+        <input id="cPhoto" type="file" accept="image/png,image/jpeg,image/webp"></div>
+      <p class="tiny">Your name is not shown to the office or the chairman. It is kept only so a complaint flagged as unnecessary can be tied to the account that sent it.</p>
+      <button class="btn solid" id="cSend" onclick="sendComplaint()">Send complaint</button>
+      <div class="msg" id="cMsg"></div>
+    </div>
+    ${mine ? `<div class="box in d3"><h2>Your complaints</h2><ul class="mylist">${mine}</ul></div>` : ''}`);
+}
+
+async function sendComplaint(){
+  const msg = document.getElementById('cMsg'), btn = document.getElementById('cSend');
+  msg.textContent = ''; btn.disabled = true;
+  const res = await api('/api/complaint', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({what: document.getElementById('cWhat').value,
+                          why: document.getElementById('cWhy').value,
+                          fix: document.getElementById('cFix').value})});
+  if (!res.ok){ msg.textContent = res.why; btn.disabled = false; return; }
+  const file = document.getElementById('cPhoto').files[0];
+  let photoNote = '';
+  if (file){
+    const up = await api('/api/complaint/photo?id=' + res.id, {method: 'POST',
+      headers: {'X-Filename': encodeURIComponent(file.name)}, body: file});
+    photoNote = up.ok ? '' : ' The photo could not be added: ' + up.why;
+  }
+  document.getElementById('cform').innerHTML = `
+    <h2 class="okhead">Successfully submitted</h2>
+    <p class="lede">Thank you. Complaint #${res.id} has been sent to the chairman and the department office.${esc(photoNote)}</p>
+    <button class="btn" onclick="complaintPage()">Send another</button>`;
+}
 
 /* ============================================================
    HOME — the first page after sign-in
@@ -893,6 +1041,7 @@ async function homePage(){
       <div class="date in"><b>${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}</b>${d.toLocaleDateString('en-GB',{weekday:'long'})}</div>
       <h1 class="page in d1">Welcome back, ${p.name.split(' ')[0]}</h1>
     </div>
+    ${HOME.sample ? `<div class="samplenote in d1"><b>Sample results.</b> This is a demo: the GPAs, class-test marks and attendance here were generated for you to try the system. They are not your real marks.</div>` : ''}
 
     <div class="homegrid">
       <section class="profile in d2">
@@ -926,6 +1075,16 @@ async function homePage(){
         ${gpaChart(HOME.semesters)}
       </section>
     </div>
+
+    ${(HOME.progress || []).length ? `
+    <h2 class="sect rise" style="margin-top:40px">This semester's courses</h2>
+    <div class="box rise progress">
+      ${HOME.progress.map(c => `<div class="prow" onclick="openCourse('${c.course_id}', ${HOME.standing.current})">
+        <div class="pname"><b>${esc(c.code)}</b><span>${esc(c.title)}</span></div>
+        <div class="pbar"><i style="width:${c.percent}%"></i></div>
+        <div class="pnum">${c.done} of ${c.total} classes done · <b>${c.left} left</b></div></div>`).join('')}
+      <p class="tiny" style="margin-top:10px">Counted from the class routine. Classes end by ${HOME.progress.map(c => c.last).sort().pop()}.</p>
+    </div>` : ''}
 
     <h2 class="sect rise" style="margin-top:40px">Your semesters</h2>
     <div class="semrow rise">${HOME.semesters.map(semCard).join('')}</div>
@@ -1096,6 +1255,7 @@ function when(at){ return at.slice(0,16).replace('T',' '); }
 function who(actor){
   if (actor.startsWith('student:')) return 'you';
   if (actor === 'system') return 'the system';
+  if (actor === 'sample-data') return 'sample data (demo)';
   return actor.replace('teacher:','teacher ');
 }
 </script>

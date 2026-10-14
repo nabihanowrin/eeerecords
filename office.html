@@ -109,6 +109,7 @@ h1.page{font-family:var(--serif);font-weight:600;font-size:36px;font-weight:400;
 .result b{display:block;font-size:16px;margin-bottom:4px}
 .foot2{margin-top:26px;font-size:12.5px;color:var(--grey)}
 .hide{display:none}
+.cphoto{max-width:320px;max-height:240px;border-radius:10px;margin-top:10px;display:block}
 @media (max-width:820px){
   .shell{grid-template-columns:1fr}
   .side{position:static;height:auto}
@@ -141,6 +142,7 @@ let PAGE = 'home', DATA = null, BATCHES = [], BATCH = null, ROLL_LIST = null, ED
 const ICON = {
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
   ask:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/></svg>',
+  flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>'
 };
@@ -189,6 +191,8 @@ function drawNav(){
     <button class="${PAGE==='requests'?'on':''}" onclick="go('requests')">${ICON.ask} Class requests
       ${DATA.waiting ? `<small>${DATA.waiting} waiting</small>` : ''}</button>
     <button class="${PAGE==='chain'?'on':''}" onclick="go('chain')">${ICON.check} Chain check</button>
+    <button class="${PAGE==='complaints'?'on':''}" onclick="go('complaints')">${ICON.flag} Complaints</button>
+    <button class="${PAGE==='teachers'?'on':''}" onclick="go('teachers')">${ICON.check} Teachers</button>
     <div class="group">BATCHES</div>
     ${BATCHES.map(b => `<button class="code ${PAGE==='batch' && BATCH===b.name ? 'on' : ''}"
         onclick="openBatch('${b.name}')">${b.name}<small>${b.students}</small></button>`).join('')}
@@ -201,6 +205,8 @@ function go(page){
   if (page === 'home') return homePage();
   if (page === 'requests') return requestsPage();
   if (page === 'chain') return chainPage();
+  if (page === 'complaints') return complaintsPage();
+  if (page === 'teachers') return teachersPage();
   if (page === 'newbatch') return newBatchPage();
 }
 
@@ -442,6 +448,7 @@ async function decide(id, approve){
    ============================================================ */
 async function chainPage(){
   drawChain();
+  demoSetup();
   const p = await api('/api/peers');
   const rows = p.copies.map(c => `<tr>
       <td><b>${esc(c.name)}</b><div class="tiny">${esc(c.url)}</div></td>
@@ -474,6 +481,17 @@ function drawChain(){
       <div style="margin-top:14px"><button class="btn solid" id="checkBtn" onclick="runCheck()">Run the check</button></div>
       <div id="checkOut"></div>
     </div>
+    <div class="box in d2 hide" id="demoBox">
+      <h2>Demo: an insider edit</h2>
+      <p class="lede">For showing the system to visitors. This changes the newest mark straight in the
+        database, the way someone with database access could, with no correction and no reason.
+        Then press <b>Run the check</b> above. <span id="demoMail"></span></p>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="demoTamper()">Simulate an insider edit</button>
+        <button class="btn" onclick="demoUndo()">Put it back</button>
+      </div>
+      <div id="demoOut"></div>
+    </div>
     <div class="box in d3" id="copies"><h2>Copies on other laptops</h2>
       <p class="lede">Asking…</p></div>`);
 }
@@ -484,8 +502,97 @@ async function runCheck(){
   out.innerHTML = '<p class="lede">Reading every block…</p>';
   const res = await api('/api/verify');
   out.innerHTML = `<div class="result ${res.ok ? 'good' : 'bad'}">
-      <b>${res.ok ? 'The chain is intact.' : 'The chain has been tampered with.'}</b>${esc(res.message)}</div>`;
+      <b>${res.ok ? 'The chain is intact.' : 'The chain has been tampered with.'}</b>${esc(res.message)}
+      ${!res.ok && res.alerts && res.email ? '<div class="tiny" style="margin-top:6px">Alert emails are on their way to the student and the office.</div>' : ''}</div>`;
   btn.disabled = false;
+}
+
+/* ============================================================
+   complaints — facilities only, without the sender's name
+   ============================================================ */
+async function complaintsPage(){
+  const d = await api('/api/office/complaints');
+  const cards = d.complaints.map(c => `
+    <div class="box">
+      <h2>#${c.id} · ${esc(c.what)} <span class="r">${when(c.at)}</span></h2>
+      <p class="lede"><b>Why it is a problem:</b> ${esc(c.why)}</p>
+      <p class="lede"><b>What should be fixed:</b> ${esc(c.fix)}</p>
+      ${c.photo ? `<img class="cphoto" data-id="${c.id}" alt="Photo sent with complaint ${c.id}">` : ''}
+      <div style="margin-top:12px">${c.flagged
+        ? `<span class="pill no">Flagged as unnecessary</span> <span class="tiny">by ${esc(c.flagged_by)} · ${when(c.flagged_at)}</span>`
+        : `<button class="btn" onclick="flagComplaint(${c.id})">Flag as unnecessary</button>`}</div>
+    </div>`).join('');
+  view(`
+    <h1 class="page in">Complaints</h1>
+    <p class="lede in d1">Facilities complaints from students. The sender's name is never shown here.
+      Flag a complaint only if it is not about department facilities; the account that sent it is then warned.</p>
+    ${cards || '<div class="box in d2"><p class="lede">No complaints yet.</p></div>'}`);
+  document.querySelectorAll('img.cphoto').forEach(async img => {
+    const r = await fetch('/api/office/complaint-photo?id=' + img.dataset.id,
+                          {headers: {Authorization: 'Bearer ' + token()}});
+    if (r.ok) img.src = URL.createObjectURL(await r.blob()); else img.remove();
+  });
+}
+
+async function flagComplaint(id){
+  if (!confirm('Flag complaint #' + id + ' as unnecessary? The account that sent it will see a warning.')) return;
+  const res = await api('/api/office/complaint-flag', {method: 'POST', body: JSON.stringify({id})});
+  if (!res.ok) alert(res.why);
+  complaintsPage();
+}
+
+/* ============================================================
+   teachers — accounts for faculty members
+   ============================================================ */
+async function teachersPage(note = ''){
+  const d = await api('/api/office/faculty');
+  const rowsHtml = d.faculty.map(f => `<tr>
+      <td><b>${esc(f.name)}</b>${f.chairman ? ' <span class="pill ok">Chairman</span>' : ''}<div class="tiny">${esc(f.designation)}</div></td>
+      <td class="mono tiny">${esc(f.email)}</td>
+      <td>${f.has_account ? '<span class="pill ok">Has an account</span>'
+          : f.can_have ? `<button class="btn" onclick="addTeacher('${esc(f.email)}')">Create account</button>`
+          : '<span class="tiny">Needs a @cu.ac.bd email</span>'}</td></tr>`).join('');
+  view(`
+    <h1 class="page in">Teachers</h1>
+    <p class="lede in d1">Teachers cannot register themselves. The office creates their account here, and the
+      teacher signs in with their university email and the password shown once below.</p>
+    ${note}
+    <div class="box in d2"><div class="sheet"><table>
+      <thead><tr><th>Name</th><th>Email</th><th></th></tr></thead><tbody>${rowsHtml}</tbody></table></div></div>`);
+}
+
+async function addTeacher(email){
+  const res = await api('/api/office/add-teacher', {method: 'POST', body: JSON.stringify({email})});
+  teachersPage(res.ok
+    ? `<div class="result good in d1"><b>Account created.</b>${esc(res.email)} · password <span class="mono">${esc(res.password)}</span>
+        — give this to the teacher now; it is not shown again.</div>`
+    : `<div class="result bad in d1">${esc(res.why)}</div>`);
+}
+
+async function demoSetup(){
+  const d = await api('/api/office/demo');
+  const box = document.getElementById('demoBox');
+  if (!box || !d.enabled) return;
+  box.classList.remove('hide');
+  document.getElementById('demoMail').textContent = d.email
+    ? `Alerts are emailed to the student${d.office_email ? ' and to ' + d.office_email : ''}.`
+    : 'Email is not set up on this server, so no alert emails are sent.';
+}
+
+async function demoTamper(){
+  const out = document.getElementById('demoOut');
+  const res = await api('/api/office/demo-tamper', {method: 'POST', body: '{}'});
+  out.innerHTML = res.ok
+    ? `<div class="result bad"><b>Changed.</b>Block ${res.block_no}: ${esc(res.roll)}'s ${esc(res.item_id)} went from ${res.was} to ${res.now}, with no reason. Now run the check.</div>`
+    : `<div class="result bad">${esc(res.why || 'Could not do that.')}</div>`;
+}
+
+async function demoUndo(){
+  const out = document.getElementById('demoOut');
+  const res = await api('/api/office/demo-undo', {method: 'POST', body: '{}'});
+  out.innerHTML = res.ok
+    ? `<div class="result good"><b>Put back.</b>Block ${res.block_no} is exactly as it was. Run the check again.</div>`
+    : `<div class="result bad">${esc(res.why || 'Could not do that.')}</div>`;
 }
 </script>
 </body>

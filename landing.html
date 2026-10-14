@@ -120,6 +120,25 @@ button,input,select{font-family:inherit}
 .dark .intro p{color:#AEBBC4}
 
 /* ---------------- quote band ---------------- */
+.faculty{padding:80px 0 40px}
+.faculty h2{font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-.02em}
+.fgrid{margin-top:26px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.fcard{background:#fff;border:1px solid #E4DCD6;border-radius:12px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:3px;font-size:14px}
+.fcard b{font-size:15px}.fcard span{color:#6E6764}.fcard a{color:#7E2233;font-size:13px;word-break:break-all;text-decoration:none}
+.fcard.chair{border-color:#7E2233;box-shadow:0 0 0 1px #7E2233 inset}
+.ftag{align-self:flex-start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:#7E2233;color:#fff !important;margin-bottom:6px}
+.ftag.leave{background:#E7E1DC;color:#5D5450 !important}
+.contact{margin-top:28px;padding:20px 22px;border-radius:14px;background:#F0EBE6;font-size:14px;line-height:1.7}
+.contact h3{font-size:16px;margin-bottom:6px}.contact a{color:#7E2233}
+.offer{padding:90px 0;background:var(--accent);color:#fff}
+.offer h2{font-size:clamp(28px,4vw,48px);font-weight:700;line-height:1.08;letter-spacing:-.02em}
+.offer .lead{margin-top:12px;color:#EBC8CF;font-size:16px}
+.offer .cards{margin-top:34px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.offer .card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:22px 22px 18px}
+.offer h3{font-size:18px;font-weight:700;margin-bottom:10px}
+.offer ul{padding-left:18px;color:#F6E3E7;font-size:14.5px;line-height:1.55}
+.offer li{margin-bottom:6px}
+.offer .seal{margin-top:28px;max-width:70ch;color:#F6E3E7;font-size:15px;line-height:1.6}
 .quote{padding:100px 0;background:var(--accent);color:#fff}
 .quote h2{font-size:clamp(30px,4.6vw,58px);font-weight:700;line-height:1.05;letter-spacing:-.03em;text-transform:uppercase;max-width:20ch}
 .quote p{margin-top:20px;color:#EBC8CF;font-size:15px;max-width:52ch;line-height:1.6}
@@ -193,7 +212,9 @@ details p{margin-top:8px;font-size:13.5px;line-height:1.6}
     <img src="photos/logo.webp" alt="" onerror="this.remove()">
     <span class="mark">EEE · Chittagong</span>
     <div class="links">
+      <a href="#what">What you get</a>
       <a href="#news">Achievements</a>
+      <a href="#faculty">Faculty</a>
       <a href="#gallery">Gallery</a>
       <a href="#faq">Questions</a>
       <a class="cta" href="#enter" id="navCta">Sign in</a>
@@ -209,9 +230,8 @@ details p{margin-top:8px;font-size:13.5px;line-height:1.6}
 
   <div class="frame rise d3">
     <div class="copy">
-      <h2>Department of Electrical and Electronic Engineering</h2>
-      <p><b id="deptYears">25 years</b> of the department: it began in September 2001 as Applied Physics and Electronics, and became Electrical and Electronic Engineering in 2017.</p>
-      <p>Sign in to see your whole academic record at a glance: marks, attendance, CATM and results, all in one place.</p>
+      <h2>Your result is a record, not a rumour.</h2>
+      <p>Signed in, a student sees every mark they have been given and every change ever made to it.</p>
       <div class="row">
         <a class="btn" href="#enter">Sign in</a>
         <a class="btn ghost" href="#enter" onclick="openRegister()">First time here</a>
@@ -253,11 +273,55 @@ details p{margin-top:8px;font-size:13.5px;line-height:1.6}
   </div>
 </section>
 
-<section class="quote">
+<section class="offer" id="what">
   <div class="wrap">
-    <h2 class="rise">A mark you cannot check is a mark you have to trust.</h2>
-    <p class="rise d1">Every entry carries a fingerprint of the one before it. Change a record outside the system and the ones after it stop matching, so the change shows itself.</p>
+    <h2 class="rise">What this website gives you</h2>
+    <p class="lead rise d1">One place for the department's academic records, for every role.</p>
+    <div class="cards rise d2">
+      <div class="card">
+        <h3>Students</h3>
+        <ul>
+          <li>Every course of your semester, with class tests, attendance and CATM worked out for you</li>
+          <li>Your GPA for each semester and your running CGPA</li>
+          <li>The full history of any mark: who entered it, when, and every change with its reason</li>
+          <li>Raise an objection on a mark you think is wrong</li>
+          <li>Your timetable, a private file locker for each course, and your projects</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Teachers</h3>
+        <ul>
+          <li>Take attendance for each class in one grid</li>
+          <li>Enter class-test marks; see each student's CATM and a class chart</li>
+          <li>Correct a mark only with a reason, which the student can read</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Office</h3>
+        <ul>
+          <li>Keep the register: batches and the students in them</li>
+          <li>Approve which teacher takes which class</li>
+          <li>Check the whole record for changes at any time</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Examiners</h3>
+        <ul>
+          <li>Enter final exam marks</li>
+          <li>Publish results; GPA and semester standing follow from them</li>
+        </ul>
+      </div>
+    </div>
+    <p class="seal rise d3"><b>How changes are caught:</b> every entry is saved with a fingerprint linked to the entry before it. If anyone changes a record outside this website, the check shows exactly which record was changed, and copies kept on other computers still hold the original.</p>
   </div>
+</section>
+
+<!-- ================= FACULTY ================= -->
+<section class="wrap faculty" id="faculty">
+  <h2 class="rise">Faculty members</h2>
+  <p class="lede rise d1">Department of Electrical and Electronic Engineering</p>
+  <div class="fgrid rise d2" id="facultyGrid"></div>
+  <div class="contact rise d3" id="contactBox"></div>
 </section>
 
 <!-- ================= SIGN IN ================= -->
@@ -427,11 +491,19 @@ function fill(list, render, a, b){
   document.getElementById(b).innerHTML = other.concat(other).map(render).join('');
 }
 
-document.getElementById('deptYears').textContent = (new Date().getFullYear() - 2001) + ' years';
-
 fetch('/api/landing').then(r => r.json()).then(d => {
   drawStats(d.stats);
   drawSlides(d.achievements);
+  document.getElementById('facultyGrid').innerHTML = (d.faculty || []).map(f => `
+    <div class="fcard${f.chairman ? ' chair' : ''}">
+      ${f.chairman ? '<span class="ftag">Chairman</span>' : ''}${f.on_leave ? '<span class="ftag leave">On study leave</span>' : ''}
+      <b>${esc(f.name)}</b><span>${esc(f.designation)}</span>
+      <a href="mailto:${esc(f.email)}">${esc(f.email)}</a></div>`).join('');
+  if (d.contact) document.getElementById('contactBox').innerHTML = `
+    <h3>Contact</h3><p>${esc(d.contact.address)}</p>
+    <p>Email <a href="mailto:${esc(d.contact.email)}">${esc(d.contact.email)}</a> ·
+       Website <a href="${esc(d.contact.website)}" target="_blank" rel="noopener">${esc(d.contact.website)}</a></p>
+    <p>Phone ${esc(d.contact.phone)} · Fax ${esc(d.contact.fax)}</p>`;
   const sel = document.getElementById('rBatch');
   (d.batches || []).forEach(b => {
     const o = document.createElement('option');
@@ -650,8 +722,9 @@ async function regStart(){
   document.getElementById('rSent').textContent = email.trim().toLowerCase();
   if (res.code){
     document.getElementById('rCode').value = res.code;
-    document.getElementById('rWhere').textContent =
-      `Email sending is switched off in this demo, so your code is shown here instead: ${res.code}`;
+    document.getElementById('rWhere').textContent = res.emailed
+      ? `It has been emailed to you, and for this demo it is also shown here: ${res.code}`
+      : `Email sending is switched off in this demo, so your code is shown here instead: ${res.code}`;
   } else {
     document.getElementById('rWhere').textContent = res.emailed
       ? 'Check your university inbox — it can take a minute.'

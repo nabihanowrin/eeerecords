@@ -79,7 +79,12 @@ h1.page{font-family:var(--serif);font-weight:600;font-size:36px;font-weight:400;
 .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:30px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer}
 .btn.solid{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+[hidden]{display:none!important}
 .btn.small{padding:7px 14px;font-size:13px}
+.resrow{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;margin-top:10px}
+.resrow div{flex:1;min-width:0}.resrow b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resrow small{color:var(--grey);font-size:12px}
+.rtype{font-size:11px;font-weight:700;background:#F8E3E5;color:#A4343F;padding:6px 8px;border-radius:8px}
 
 .form{display:grid;gap:12px;margin-top:14px;max-width:560px}
 .form label{font-size:12px;color:var(--grey)}
@@ -396,12 +401,85 @@ function drawClass(){
       <button class="${TAB==='att'?'on':''}" onclick="TAB='att';drawClass()">Attendance</button>
       <button class="${TAB==='ct'?'on':''}" onclick="TAB='ct';drawClass()">${c.kind === 'lab' ? 'Lab marks' : 'Class tests'}</button>
       <button class="${TAB==='catm'?'on':''}" onclick="TAB='catm';drawClass()">${c.kind === 'lab' ? 'Lab total' : 'CATM'}</button>
+      <button class="${TAB==='res'?'on':''}" onclick="TAB='res';drawClass()">Resources</button>
     </div>`;
+
+  if (TAB === 'res')  return resTab(head, c);
 
   if (TAB === 'att')  return view(head + attendanceTab());
   if (TAB === 'ct')   return view(head + marksTab());
   view(head + catmTab());
   if (WHO) showCatm(WHO);
+}
+
+/* ============================================================
+   resources — files shared with everyone taking the course
+   ============================================================ */
+async function resTab(head, c){
+  view(head + '<p class="lede">Loading…</p>');
+  const r = await api(`/api/resources?course_id=${encodeURIComponent(c.course_id)}`);
+  if (r.ok === false) return view(head + `<div class="box"><p class="lede">${esc(r.why)}</p></div>`);
+  const mb = n => n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+  const when = at => at.slice(0,16).replace('T',' ');
+  const shelf = k => `<div class="box"><h2 style="display:flex;gap:10px;align-items:center">${k.label}
+      <span class="pill dim">${k.files.length}</span>
+      <button class="btn small" style="margin-left:auto" onclick="showUp('${k.key}')">+ Add</button></h2>
+      ${k.files.map(f => `<div class="resrow"><span class="rtype">${f.type}</span>
+        <div><b>${esc(f.title)}</b><small>${esc(f.by)}${f.teacher ? ' (teacher)' : ' (student)'} · ${mb(f.size)} · ${when(f.at)}</small></div>
+        <button class="btn small" onclick="openRes(${f.id})">Open</button>
+        ${f.can_remove ? `<button class="btn small" onclick="dropRes(${f.id})">Remove</button>` : ''}</div>`).join('')
+        || '<p class="lede">Nothing uploaded yet.</p>'}</div>`;
+  view(head + `
+    <div class="box"><h2 style="display:flex;align-items:center">Course resources
+      <button class="btn solid small" style="margin-left:auto" onclick="showUp()">Upload</button></h2>
+      <p class="lede">Shared with every student taking ${esc(c.code)}. Students can add files too; you can remove anything you added.</p>
+      <div class="form" id="upBox" hidden style="margin-top:14px">
+        <label>Choose a file from your device</label>
+        <input type="file" id="upFile" accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.pptx"
+          onchange="const t=document.getElementById('upTitle'); if(this.files[0]&&!t.value) t.value=this.files[0].name.replace(/\\.[^.]+$/,'')">
+        <label style="margin-top:12px">What type of file is this?</label>
+        <select id="upCat"><option value="">Choose one…</option>${r.categories.map(k => `<option value="${k.key}">${k.label}</option>`).join('')}</select>
+        <label style="margin-top:12px">Title (optional)</label>
+        <input id="upTitle" maxlength="120" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;font-size:14px;background:var(--cream)">
+        <p class="lede" style="font-size:12.5px">${r.types.join(', ')} · up to ${r.max_mb} MB</p>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+          <button class="btn solid" onclick="sendRes('${c.course_id}')">Upload</button>
+          <span class="msg bad" id="upMsg"></span></div>
+      </div></div>
+    ${r.categories.map(shelf).join('')}`);
+}
+function showUp(cat){
+  document.getElementById('upBox').hidden = false;
+  if (cat) document.getElementById('upCat').value = cat;
+  document.getElementById('upBox').scrollIntoView({behavior:'smooth', block:'center'});
+}
+async function sendRes(courseId){
+  const file = document.getElementById('upFile').files[0], cat = document.getElementById('upCat').value;
+  const msg = document.getElementById('upMsg');
+  if (!file){ msg.textContent = 'Choose a file first.'; return; }
+  if (!cat){ msg.textContent = 'Choose what type of file it is.'; return; }
+  msg.textContent = 'Uploading…';
+  const r = await fetch(`/api/resources/upload?course_id=${encodeURIComponent(courseId)}&category=${cat}`, {method:'POST',
+    headers:{Authorization:'Bearer ' + token(), 'X-Filename': encodeURIComponent(file.name),
+             'X-Title': encodeURIComponent(document.getElementById('upTitle').value), 'Content-Type':'application/octet-stream'},
+    body:file});
+  const res = await r.json().catch(() => ({ok:false, why:'The upload failed. Please try again.'}));
+  if (!res.ok){ msg.textContent = res.why; return; }
+  drawClass();
+}
+async function openRes(id){
+  const tab = window.open('', '_blank');
+  try {
+    const r = await fetch(`/api/resource?id=${id}`, {headers:{Authorization:'Bearer ' + token()}});
+    if (!r.ok) throw new Error();
+    tab.location = URL.createObjectURL(await r.blob());
+  } catch (e) { tab.close(); alert('That file could not be opened.'); }
+}
+async function dropRes(id){
+  if (!confirm('Remove this file for everyone in the course?')) return;
+  const res = await api('/api/resources/remove', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+  if (!res.ok) alert(res.why);
+  drawClass();
 }
 
 /* ============================================================

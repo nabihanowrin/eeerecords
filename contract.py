@@ -123,12 +123,13 @@ def correct_mark(teacher_id, course_id, roll, item_id, value, reason):
     if not reason or not reason.strip():
         raise Refused("A correction needs a reason the student can read.")
 
-    return add_entry(
-        "correction",
-        {"course_id": course_id, "roll": roll, "item_id": item_id,
-         "value": value, "reason": reason.strip()},
-        teacher_id,
-    )
+    import notices
+    before = notices.previous_value(course_id, roll, item_id)
+    payload = {"course_id": course_id, "roll": roll, "item_id": item_id,
+               "value": value, "reason": reason.strip()}
+    result = add_entry("correction", payload, teacher_id)
+    notices.mark_saved("correction", payload, teacher_id, before)
+    return result
 
 
 # ==================================================================
@@ -627,12 +628,18 @@ def enter_score(teacher_id, course_id, session, roll, item_id, value, absent=Fal
     payload = {"course_id": course_id, "roll": roll, "item_id": item_id,
                "value": value, "absent": bool(absent)}
 
+    import notices
     if mark_was_entered(course_id, roll, item_id):
         if not reason or not reason.strip():
             raise Refused("Changing a mark that is already in needs a reason the student can read.")
         payload["reason"] = reason.strip()
-        return add_entry("correction", payload, teacher_id)[0]
-    return add_entry("score", payload, teacher_id)[0]
+        before = notices.previous_value(course_id, roll, item_id)
+        block_no = add_entry("correction", payload, teacher_id)[0]
+        notices.mark_saved("correction", payload, teacher_id, before)
+        return block_no
+    block_no = add_entry("score", payload, teacher_id)[0]
+    notices.mark_saved("score", payload, teacher_id, None)
+    return block_no
 
 
 # ------------------------------------------------------------------
@@ -941,10 +948,16 @@ def enter_final(examiner, course_id, roll, value, absent):
 
     payload = {"course_id": course_id, "roll": roll, "item_id": item_id,
                "value": value, "absent": bool(absent)}
+    import notices
     if mark_was_entered(course_id, roll, item_id):
         payload["reason"] = "Changed by the examiner before results were published"
-        return add_entry("correction", payload, examiner)
-    return add_entry("score", payload, examiner)
+        before = notices.previous_value(course_id, roll, item_id)
+        result = add_entry("correction", payload, examiner)
+        notices.mark_saved("correction", payload, examiner, before)
+        return result
+    result = add_entry("score", payload, examiner)
+    notices.mark_saved("score", payload, examiner, None)
+    return result
 
 
 # ==================================================================
