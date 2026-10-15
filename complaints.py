@@ -22,6 +22,7 @@ import datetime as dt
 
 import mailer
 from ledger import connect, add_entry
+import db
 from contract import Refused, IMAGE_TYPES, MAX_UPLOAD
 
 PER_DAY = 3
@@ -87,10 +88,8 @@ def add_photo(roll, cid, filename, data):
     if not row:
         con.close()
         raise Refused("No such complaint.")
-    os.makedirs(FOLDER, exist_ok=True)
     path = os.path.join(FOLDER, f"{int(cid)}{ext}")
-    with open(path, "wb") as f:
-        f.write(data)
+    db.save_file(path, data)                 # on disk, and in Postgres when online
     con.execute("UPDATE complaints SET image=? WHERE id=?", (path, cid))
     con.commit()
     con.close()

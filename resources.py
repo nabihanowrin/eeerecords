@@ -21,6 +21,7 @@ import hashlib
 import datetime as dt
 
 from ledger import connect, add_entry
+import db
 from contract import Refused
 
 CATEGORIES = {
@@ -138,10 +139,8 @@ def add(user, display_name, course_id, category, filename, title, data):
         raise Refused("This exact file is already in this course's resources.")
     title = " ".join((title or "").split())[:120] or os.path.splitext(filename)[0]
 
-    os.makedirs(FOLDER, exist_ok=True)
     path = os.path.join(FOLDER, digest[:24] + ext)
-    with open(path, "wb") as f:
-        f.write(data)
+    db.save_file(path, data)                 # on disk, and in Postgres when online
     block_no = add_entry("resource_added", {"course_id": course_id, "category": category,
                                             "file": filename, "sha256": digest}, me)[0]
     con = connect()
@@ -178,5 +177,5 @@ def remove(user, rid):
     con.execute("DELETE FROM course_resources WHERE id=?", (rid,))
     con.commit()
     con.close()
-    if not _rows("SELECT 1 FROM course_resources WHERE path=?", (path,)) and os.path.isfile(path):
-        os.remove(path)
+    if not _rows("SELECT 1 FROM course_resources WHERE path=?", (path,)):
+        db.delete_file(path)

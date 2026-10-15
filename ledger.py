@@ -1,13 +1,10 @@
-import sqlite3
 import hashlib
 import json
 from datetime import datetime, timezone
 
-DB_FILE = "records.db"
-
-
-def connect():
-    return sqlite3.connect(DB_FILE)
+# connect() opens Postgres (Supabase) when DATABASE_URL is set, otherwise
+# the records.db file — see db.py
+from db import connect, DB_FILE, using_postgres  # noqa: F401
 
 
 def init_db():

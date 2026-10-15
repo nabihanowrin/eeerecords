@@ -36,7 +36,13 @@ DEMO_TAMPER = os.environ.get("DEMO_TAMPER", "1") == "1"
 
 # first start on a fresh machine (e.g. a cloud server): begin from the
 # anonymous demo database, so no real student data ever leaves a laptop
-if not os.path.exists("records.db") and os.path.exists("demo_records.db"):
+import db
+if db.using_postgres():
+    # online: the records live in Postgres (Supabase) and survive restarts.
+    # The very first start copies the demo database in.
+    print(f"  Database: Postgres ({db.bootstrap_postgres()}); "
+          f"{db.restore_files()} saved files put back on disk", flush=True)
+elif not os.path.exists("records.db") and os.path.exists("demo_records.db"):
     import shutil
     shutil.copyfile("demo_records.db", "records.db")
 DAYS = {6: "Sunday", 0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday"}
@@ -123,7 +129,7 @@ def items_for(course_id, roll):
     for item_id, label, limit, category, held_on in rows(
             "SELECT i.item_id, i.label, i.weight, m.category, m.held_on "
             "FROM items i JOIN item_meta m ON m.item_id = i.item_id "
-            "WHERE i.course_id=? AND (m.category != 'final' OR ?) "
+            "WHERE i.course_id=? AND (m.category != 'final' OR ? = 1) "
             "ORDER BY m.category = 'final', m.held_on, i.item_id", (course_id, int(show_final))):
         value = scores.get(item_id)
         events = mark_history(course_id, roll, item_id)
@@ -155,7 +161,7 @@ def items_for(course_id, roll):
 def theory_catm(items, att, credits):
     entered = [i for i in items if i["state"] == "entered" and i["category"] == "ct"]
     fractions = [i["value"] / i["out_of"] for i in entered]
-    n = int(credits)
+    n = int(credits) if credits else 3        # credits not in the booklet yet: most theory courses are 3
     best = contract.best_n(fractions, n)
 
     ranked = sorted(entered, key=lambda i: i["value"] / i["out_of"], reverse=True)
@@ -460,10 +466,8 @@ def save_upload(roll, kind, filename, data, project_id=None):
     digest = hashlib.sha256(data).hexdigest()
 
     folder = os.path.join("uploads", roll)
-    os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, digest[:16] + ext)
-    with open(path, "wb") as f:               # wb = write bytes
-        f.write(data)
+    db.save_file(path, data)                  # on disk, and in Postgres when online
 
     url = "/api/file?path=" + path.replace(os.sep, "/")
     con = connect()
@@ -768,8 +772,7 @@ def locker_save(roll, course_id, filename, data):
     folder = os.path.join("uploads", roll, "locker")
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, hashlib.sha256(data).hexdigest()[:16] + ".pdf")
-    with open(path, "wb") as f:
-        f.write(data)
+    db.save_file(path, data)
     con = connect()
     con.execute("INSERT INTO locker (roll, course_id, name, path, size, uploaded_at) VALUES (?,?,?,?,?,?)",
                 (roll, course_id, os.path.basename(filename)[:120], path, len(data),
@@ -1191,8 +1194,8 @@ class Handler(SimpleHTTPRequestHandler):
                 before = json.loads(text)
                 after = dict(before)
                 after["value"] = (before.get("value") or 0) + 5
-                with open(demo_tamper.KEPT, "w", encoding="utf-8") as f:
-                    json.dump({"block_no": block_no, "payload": text}, f)
+                db.save_file(demo_tamper.KEPT,           # kept in Postgres too, so a restart
+                             json.dumps({"block_no": block_no, "payload": text}).encode())  # can't lose it
                 con = connect()
                 con.execute("UPDATE blocks SET payload=? WHERE block_no=?",
                             (json.dumps(after, sort_keys=True, separators=(",", ":")), block_no))
@@ -1209,7 +1212,7 @@ class Handler(SimpleHTTPRequestHandler):
             con.execute("UPDATE blocks SET payload=? WHERE block_no=?", (kept["payload"], kept["block_no"]))
             con.commit()
             con.close()
-            os.remove(demo_tamper.KEPT)
+            db.delete_file(demo_tamper.KEPT)
             notices.check_now()                   # chain is whole again: refresh the watchdog
             return self.reply({"ok": True, "block_no": kept["block_no"]})
 
@@ -1342,7 +1345,7 @@ class Handler(SimpleHTTPRequestHandler):
                 path = owned_file(roll, locker_id=body.get("id"))
                 if not path:
                     raise Refused("Not found.")
-                os.remove(path)
+                db.delete_file(path)
                 con = connect()
                 con.execute("DELETE FROM locker WHERE id=? AND roll=?", (body.get("id"), roll))
                 con.commit()
