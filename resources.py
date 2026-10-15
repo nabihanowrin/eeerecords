@@ -34,8 +34,8 @@ TYPES = {".pdf": "application/pdf", ".png": "image/png", ".jpg": "image/jpeg",
          ".jpeg": "image/jpeg", ".webp": "image/webp",
          ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
          ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation"}
-MAX_FILE = 15 * 1024 * 1024          # 15 MB a file
-MAX_PER_PERSON = 150 * 1024 * 1024   # 150 MB in total per person
+MAX_FILE = 5 * 1024 * 1024          # 5 MB a file
+MAX_PER_PERSON = 20 * 1024 * 1024   # 20 MB in total per person
 FOLDER = os.path.join("uploads", "resources")
 
 # a few standard textbooks, shown on the Books shelf as suggestions (no file)
