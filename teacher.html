@@ -190,6 +190,13 @@ table.review input.why{width:100%;padding:7px 10px;border:1px solid var(--line);
   .main{padding:24px 16px 60px}
 }
 </style>
+<style>
+/* every page opens with a 0.5 s fade from the cream background */
+html{background:#F6F2EE}
+body{animation:pageIn .5s ease backwards}
+@keyframes pageIn{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){body{animation:none}}
+</style>
 </head>
 <body>
 

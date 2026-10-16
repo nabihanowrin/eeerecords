@@ -251,6 +251,13 @@ details p{margin-top:8px;font-size:13.5px;line-height:1.6}
   .hero .copy{max-width:none;padding-top:28px}
 }
 </style>
+<style>
+/* every page opens with a 0.5 s fade from the cream background */
+html{background:#F6F2EE}
+body{animation:pageIn .5s ease backwards}
+@keyframes pageIn{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){body{animation:none}}
+</style>
 </head>
 <body>
 
@@ -668,6 +675,7 @@ async function checkSignedIn(){
   cta.textContent = {examiner: 'Open mark entry', teacher: 'Open my classes',
                      office: 'Open the office desk'}[me.role] || 'Open my records';
   cta.href = home(me.role);
+  cta.onclick = e => { e.preventDefault(); enterAccount(home(me.role)); };   // play the logo on the way in
 }
 checkSignedIn();
 
@@ -865,7 +873,9 @@ async function signOutHere(){
   overflow:hidden;
 }
 /* faint graph paper */
-#eee-intro.play{display:flex}
+#eee-intro.play{display:flex;animation:eeeIn .5s ease both}
+@keyframes eeeIn{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){#eee-intro.play{animation:none}}
 #eee-intro::before{
   content:"";position:absolute;inset:-48px;pointer-events:none;
   background-image:
@@ -1117,7 +1127,8 @@ async function signOutHere(){
     uni.classList.remove('on');
     intro.classList.add('play');
     document.documentElement.style.overflow = 'hidden';
-    try { await document.fonts.load('700 30px Montserrat'); } catch (e) {}
+    // wait for the title font, but never more than a moment
+    try { await Promise.race([document.fonts.load('700 30px Montserrat'), new Promise(r => setTimeout(r, 300))]); } catch (e) {}
     buildTitle();
     slideMs = rowsInfo.length > 1 ? 650 : 1500;
     if (reduce) {
@@ -1127,6 +1138,7 @@ async function signOutHere(){
       setTimeout(finish, 900);
       return;
     }
+    await new Promise(r => setTimeout(r, 450));        // let the 0.5 s fade-in finish first
     t0 = performance.now();
     raf = requestAnimationFrame(frame);
   };

@@ -111,6 +111,13 @@ tbody tr:focus-within td.who{background:#F6EEE4;box-shadow:inset 3px 0 0 var(--a
   .main{padding:22px 14px 60px}
 }
 </style>
+<style>
+/* every page opens with a 0.5 s fade from the cream background */
+html{background:#F6F2EE}
+body{animation:pageIn .5s ease backwards}
+@keyframes pageIn{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){body{animation:none}}
+</style>
 </head>
 <body>
 <div class="shell hide" id="app">

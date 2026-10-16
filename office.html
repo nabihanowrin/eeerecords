@@ -140,6 +140,13 @@ h1.page{font-family:var(--serif);font-weight:600;font-size:36px;font-weight:400;
 .okmsg{font-size:13.5px;margin-top:10px;min-height:18px}
 .okmsg.bad{color:var(--bad)}.okmsg.good{color:var(--ok)}
 </style>
+<style>
+/* every page opens with a 0.5 s fade from the cream background */
+html{background:#F6F2EE}
+body{animation:pageIn .5s ease backwards}
+@keyframes pageIn{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){body{animation:none}}
+</style>
 </head>
 <body>
 
