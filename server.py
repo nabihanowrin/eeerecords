@@ -25,6 +25,7 @@ import notices
 import complaints
 import faculty
 import resources
+import site_content
 from contract import Refused
 
 # a cloud host tells us which port to use; on a laptop it is 8080
@@ -485,9 +486,9 @@ def save_upload(roll, kind, filename, data, project_id=None):
     return url
 
 def landing_view():
-    ach = [{"title": t, "detail": d, "year": y, "image": i}
-           for t, d, y, i in rows("SELECT title, detail, year, image FROM achievements "
-                                  "ORDER BY year DESC, id DESC")]
+    ach = [{"title": t, "detail": d, "year": y, "image": i, "link": l or ""}
+           for t, d, y, i, l in rows("SELECT title, detail, year, image, link FROM achievements "
+                                     "ORDER BY year DESC, id DESC")]
     pics = [{"image": i, "caption": c}
             for i, c in rows("SELECT image, caption FROM gallery ORDER BY id")
             if os.path.exists(i)]                 # skip pictures that aren't there
@@ -998,6 +999,10 @@ class Handler(SimpleHTTPRequestHandler):
                                    "office_email": mailer.office_address()})
             if url.path == "/api/office/batches":
                 return self.reply({"batches": contract.batches()})
+            if url.path == "/api/office/gallery":
+                return self.reply({"pictures": site_content.gallery_list()})
+            if url.path == "/api/office/achievements":
+                return self.reply({"achievements": site_content.achievements_list()})
             if url.path == "/api/office/students":
                 session = one("session")
                 found = [b for b in contract.batches() if b["name"] == session]
@@ -1148,6 +1153,39 @@ class Handler(SimpleHTTPRequestHandler):
                     results.append({"course_id": e.get("course_id"), "roll": e.get("roll"),
                                     "ok": False, "why": str(why)})
             return self.reply({"ok": all(r["ok"] for r in results), "results": results})
+
+        # ---------------- office: landing page pictures and achievements ----------------
+        if url.path in ("/api/office/gallery/add", "/api/office/gallery/remove",
+                        "/api/office/achievements/add", "/api/office/achievements/remove",
+                        "/api/office/achievements/link"):
+            if user["role"] != "office":
+                return self.reply({"ok": False, "why": "The office only."}, 403)
+            head = lambda k: unquote(self.headers.get(k, ""))
+            try:
+                if url.path == "/api/office/gallery/add":
+                    if length > site_content.MAX_UPLOAD:
+                        raise Refused("The picture must be under 5 MB.")
+                    site_content.gallery_add(user["email"], head("X-Filename"),
+                                             self.rfile.read(length), head("X-Caption"))
+                elif url.path == "/api/office/achievements/add":
+                    if length > site_content.MAX_UPLOAD:
+                        raise Refused("The picture must be under 5 MB.")
+                    data = self.rfile.read(length) if length else None
+                    site_content.achievement_add(user["email"], head("X-Title"), head("X-Detail"),
+                                                 head("X-Year"), head("X-Link"),
+                                                 head("X-Filename"), data)
+                else:
+                    body = json.loads(self.rfile.read(length) or "{}")
+                    item = int(body.get("id") or 0)
+                    if url.path == "/api/office/gallery/remove":
+                        site_content.gallery_remove(user["email"], item)
+                    elif url.path == "/api/office/achievements/remove":
+                        site_content.achievement_remove(user["email"], item)
+                    else:
+                        site_content.achievement_set_link(user["email"], item, body.get("link"))
+                return self.reply({"ok": True})
+            except Refused as why:
+                return self.reply({"ok": False, "why": str(why)}, 400)
 
         if url.path == "/api/office/add-teacher":
             if user["role"] != "office":
@@ -1385,6 +1423,7 @@ init_locker()
 contract.init_teaching()
 complaints.init()
 resources.init()
+site_content.init()
 faculty.apply_course_teachers(connect)
 
 def my_address():

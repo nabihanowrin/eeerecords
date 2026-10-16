@@ -118,6 +118,27 @@ h1.page{font-family:var(--serif);font-weight:600;font-size:36px;font-weight:400;
   .nav button.on::before,.nav button.on::after{display:none}
   .main{padding:24px 16px 60px}
 }
+
+/* landing page content: gallery and achievements */
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:16px}
+.thumb{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--cream);display:flex;flex-direction:column}
+.thumb img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#E7E1DC}
+.thumb .cap{padding:10px 12px;font-size:13px;color:var(--grey);flex:1;overflow-wrap:anywhere}
+.thumb .row{display:flex;justify-content:flex-end;padding:0 12px 12px}
+.upl{display:grid;gap:12px;max-width:560px;margin-top:14px}
+.upl label{font-size:13px;font-weight:600;display:block;margin-bottom:5px}
+.upl input[type=text],.upl input[type=url],.upl input[type=number],.upl textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:var(--cream);font-family:inherit}
+.upl textarea{min-height:80px;resize:vertical}
+.upl .hint{font-size:12px;color:var(--grey);margin-top:4px}
+.achrow{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:16px 0;border-top:1px solid var(--line)}
+.achrow:first-of-type{border-top:none}
+.achrow img{width:120px;aspect-ratio:3/2;object-fit:cover;border-radius:10px;background:#E7E1DC;display:block}
+.achrow b{font-size:15px;display:block}
+.achrow p{font-size:13px;color:var(--grey);margin-top:4px;line-height:1.5}
+.achrow .linkrow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.achrow .linkrow input{flex:1;min-width:200px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-size:13px;background:var(--cream)}
+.okmsg{font-size:13.5px;margin-top:10px;min-height:18px}
+.okmsg.bad{color:var(--bad)}.okmsg.good{color:var(--ok)}
 </style>
 </head>
 <body>
@@ -144,6 +165,8 @@ const ICON = {
   ask:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/></svg>',
   flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg>',
+  pic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 7"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>'
 };
 
@@ -193,6 +216,9 @@ function drawNav(){
     <button class="${PAGE==='chain'?'on':''}" onclick="go('chain')">${ICON.check} Chain check</button>
     <button class="${PAGE==='complaints'?'on':''}" onclick="go('complaints')">${ICON.flag} Complaints</button>
     <button class="${PAGE==='teachers'?'on':''}" onclick="go('teachers')">${ICON.check} Teachers</button>
+    <div class="group">LANDING PAGE</div>
+    <button class="${PAGE==='gallery'?'on':''}" onclick="go('gallery')">${ICON.pic} Gallery</button>
+    <button class="${PAGE==='achievements'?'on':''}" onclick="go('achievements')">${ICON.star} Achievements</button>
     <div class="group">BATCHES</div>
     ${BATCHES.map(b => `<button class="code ${PAGE==='batch' && BATCH===b.name ? 'on' : ''}"
         onclick="openBatch('${b.name}')">${b.name}<small>${b.students}</small></button>`).join('')}
@@ -208,6 +234,8 @@ function go(page){
   if (page === 'complaints') return complaintsPage();
   if (page === 'teachers') return teachersPage();
   if (page === 'newbatch') return newBatchPage();
+  if (page === 'gallery') return galleryPage();
+  if (page === 'achievements') return achievementsPage();
 }
 
 /* ============================================================
@@ -593,6 +621,143 @@ async function demoUndo(){
   out.innerHTML = res.ok
     ? `<div class="result good"><b>Put back.</b>Block ${res.block_no} is exactly as it was. Run the check again.</div>`
     : `<div class="result bad">${esc(res.why || 'Could not do that.')}</div>`;
+}
+
+/* ============================================================
+   landing page: the pictures in "Around the department"
+   ============================================================ */
+async function galleryPage(){
+  const d = await api('/api/office/gallery');
+  const cards = d.pictures.map(p => `
+    <div class="thumb">
+      ${p.missing ? '<img alt="">' : `<img src="${esc(p.image)}" alt="">`}
+      <div class="cap">${esc(p.caption) || '<i>No caption</i>'}${p.missing ? '<br><b style="color:var(--bad)">File missing</b>' : ''}</div>
+      <div class="row"><button class="btn small" onclick="removePicture(${p.id})">Remove</button></div>
+    </div>`).join('');
+  view(`
+    <h1 class="page in">Gallery</h1>
+    <p class="lede in d1">The pictures that scroll in "Around the department" on the landing page.
+      A new picture shows there as soon as it is uploaded.</p>
+    <div class="box in d2">
+      <h2>Upload a picture</h2>
+      <div class="upl">
+        <div><label for="gFile">Picture</label><input id="gFile" type="file" accept=".jpg,.jpeg,.png,.webp">
+          <div class="hint">JPG, PNG or WEBP, under 5 MB.</div></div>
+        <div><label for="gCap">Caption (optional)</label><input id="gCap" type="text" maxlength="140" placeholder="e.g. Electronics lab, 3rd year"></div>
+        <div><button class="btn solid" id="gBtn" onclick="uploadPicture()">Upload</button></div>
+      </div>
+      <div class="okmsg" id="gMsg"></div>
+    </div>
+    <div class="box in d3">
+      <h2>On the landing page <span class="r">${d.pictures.length}</span></h2>
+      ${d.pictures.length ? `<div class="thumbs">${cards}</div>` : '<p class="lede">No pictures yet.</p>'}
+    </div>`);
+}
+
+async function uploadPicture(){
+  const file = document.getElementById('gFile').files[0];
+  const msg = document.getElementById('gMsg');
+  msg.className = 'okmsg';
+  if (!file){ msg.className = 'okmsg bad'; msg.textContent = 'Choose a picture first.'; return; }
+  const btn = document.getElementById('gBtn');
+  btn.disabled = true; msg.textContent = 'Uploading…';
+  const res = await api('/api/office/gallery/add', {method: 'POST', body: file, headers: {
+    'X-Filename': encodeURIComponent(file.name),
+    'X-Caption': encodeURIComponent(document.getElementById('gCap').value)}});
+  btn.disabled = false;
+  if (!res.ok){ msg.className = 'okmsg bad'; msg.textContent = res.why; return; }
+  await galleryPage();
+  const m = document.getElementById('gMsg'); m.className = 'okmsg good'; m.textContent = 'Uploaded. It is on the landing page now.';
+}
+
+async function removePicture(id){
+  const res = await api('/api/office/gallery/remove', {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id})});
+  if (!res.ok){ alertBox('gMsg', res.why); return; }
+  await galleryPage();
+  const m = document.getElementById('gMsg'); m.className = 'okmsg good'; m.textContent = 'Removed from the landing page.';
+}
+
+/* ============================================================
+   landing page: achievements, each with a photo and a link
+   ============================================================ */
+async function achievementsPage(){
+  const d = await api('/api/office/achievements');
+  const list = d.achievements.map(a => `
+    <div class="achrow">
+      ${a.image ? `<img src="${esc(a.image)}" alt="">` : '<img alt="">'}
+      <div>
+        <b>${esc(a.title)}</b>
+        <p>${a.year} · ${esc(a.detail)}</p>
+        <div class="linkrow">
+          <input id="link${a.id}" type="url" value="${esc(a.link)}" placeholder="https://… link to the post" aria-label="Link for ${esc(a.title)}">
+          <button class="btn small" onclick="saveLink(${a.id})">Save link</button>
+          <button class="btn small" onclick="removeAchievement(${a.id})">Remove</button>
+        </div>
+      </div>
+    </div>`).join('');
+  view(`
+    <h1 class="page in">Achievements</h1>
+    <p class="lede in d1">The cards in "Achievements" on the landing page. Clicking a card opens its link,
+      so give each one the link to the real post.</p>
+    <div class="box in d2">
+      <h2>Add an achievement</h2>
+      <div class="upl">
+        <div><label for="aTitle">Title</label><input id="aTitle" type="text" maxlength="200" placeholder="e.g. Champions of VLSIthon 3.0"></div>
+        <div><label for="aDetail">Short description</label><textarea id="aDetail" maxlength="600" placeholder="Who, what, where"></textarea></div>
+        <div><label for="aYear">Year</label><input id="aYear" type="number" min="1990" max="2100" value="${new Date().getFullYear()}" style="max-width:140px"></div>
+        <div><label for="aLink">Link to the post</label><input id="aLink" type="url" placeholder="https://www.facebook.com/…">
+          <div class="hint">Must start with https:// or http://</div></div>
+        <div><label for="aFile">Photo</label><input id="aFile" type="file" accept=".jpg,.jpeg,.png,.webp">
+          <div class="hint">JPG, PNG or WEBP, under 5 MB.</div></div>
+        <div><button class="btn solid" id="aBtn" onclick="addAchievement()">Add achievement</button></div>
+      </div>
+      <div class="okmsg" id="aMsg"></div>
+    </div>
+    <div class="box in d3">
+      <h2>On the landing page <span class="r">${d.achievements.length}</span></h2>
+      ${list || '<p class="lede">No achievements yet.</p>'}
+    </div>`);
+}
+
+async function addAchievement(){
+  const msg = document.getElementById('aMsg');
+  const file = document.getElementById('aFile').files[0];
+  msg.className = 'okmsg';
+  if (!document.getElementById('aTitle').value.trim()){ msg.className = 'okmsg bad'; msg.textContent = 'Give the achievement a title.'; return; }
+  if (!file){ msg.className = 'okmsg bad'; msg.textContent = 'Choose a photo.'; return; }
+  const btn = document.getElementById('aBtn');
+  btn.disabled = true; msg.textContent = 'Saving…';
+  const enc = id => encodeURIComponent(document.getElementById(id).value);
+  const res = await api('/api/office/achievements/add', {method: 'POST', body: file, headers: {
+    'X-Filename': encodeURIComponent(file.name), 'X-Title': enc('aTitle'), 'X-Detail': enc('aDetail'),
+    'X-Year': enc('aYear'), 'X-Link': enc('aLink')}});
+  btn.disabled = false;
+  if (!res.ok){ msg.className = 'okmsg bad'; msg.textContent = res.why; return; }
+  await achievementsPage();
+  const m = document.getElementById('aMsg'); m.className = 'okmsg good'; m.textContent = 'Added. It is on the landing page now.';
+}
+
+async function saveLink(id){
+  const res = await api('/api/office/achievements/link', {method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({id, link: document.getElementById('link' + id).value})});
+  if (!res.ok){ alertBox('aMsg', res.why); return; }
+  await achievementsPage();
+  const m = document.getElementById('aMsg'); m.className = 'okmsg good'; m.textContent = 'Link saved.';
+}
+
+async function removeAchievement(id){
+  const res = await api('/api/office/achievements/remove', {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id})});
+  if (!res.ok){ alertBox('aMsg', res.why); return; }
+  await achievementsPage();
+  const m = document.getElementById('aMsg'); m.className = 'okmsg good'; m.textContent = 'Removed from the landing page.';
+}
+
+function alertBox(id, text){
+  const m = document.getElementById(id);
+  if (m){ m.className = 'okmsg bad'; m.textContent = text; }
 }
 </script>
 </body>
