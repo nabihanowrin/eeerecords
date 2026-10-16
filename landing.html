@@ -571,6 +571,8 @@ fetch('/api/landing').then(r => r.json()).then(d => {
 
 /* ---------- counters: 0 up to the number, fast, as soon as the page opens ---------- */
 function drawStats(stats){
+  // the database has no graduates figure yet, so the page shows 500+ until it does
+  stats = stats.map(s => (s.value === null && /graduate/i.test(s.label || s.key || '')) ? {...s, value: 500} : s);
   document.getElementById('stats').innerHTML = stats.map((s, i) => `
     <div class="cell rise d${Math.min(i,3)}">
       ${s.value === null
