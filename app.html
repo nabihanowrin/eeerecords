@@ -50,7 +50,7 @@ button{font-family:inherit}
 .btn.wide{width:100%;margin-top:14px;padding:14px}
 
 /* ---------------- shell ---------------- */
-.shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+.shell{display:grid;grid-template-columns:clamp(230px,17vw,290px) minmax(0,1fr);min-height:100vh}
 .side{background:var(--side);color:var(--side-text);padding:18px 0 18px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
 .me{padding:0 24px 16px;border-bottom:1px solid #2E3C46;margin-bottom:0}
 .me .dot{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:600;font-size:14px}
@@ -115,7 +115,7 @@ button{font-family:inherit}
 .nav .group{font-size:11px;letter-spacing:.1em;color:#6F8290;padding:10px 18px 3px}
 .side .out{margin:auto 24px 0;background:none;border:1px solid #3A4A55;color:var(--side-text);border-radius:30px;padding:9px;font-size:13px;cursor:pointer}
 
-.main{padding:34px 40px 70px;max-width:1240px;width:100%}
+.shell > .main{padding:34px clamp(24px,3vw,56px) 70px;width:100%}
 h1.page{font-family:var(--serif);font-weight:600;font-size:36px;font-weight:400;line-height:1.1}
 .lede{color:var(--grey);margin-top:6px;font-size:14.5px}
 
@@ -135,7 +135,7 @@ h1.page{font-family:var(--serif);font-weight:600;font-size:36px;font-weight:400;
 .two .box{margin-top:20px}
 
 /* small summary chips */
-.chips{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:22px}
 .chip{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:150px}
 .chip .k{font-size:12px;color:var(--grey)}
 .chip .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:19px;margin-top:4px}
@@ -344,6 +344,22 @@ tr:last-child td{border-bottom:none}
 @media (max-width:600px){ .profile{grid-template-columns:1fr} .projects{grid-template-columns:1fr} .pcol.second{display:none} }
 
 .hide{display:none}
+[hidden]{display:none !important}
+.emptyrow{color:var(--grey);font-size:13.5px;padding:16px 4px}
+.photoprev{display:flex;align-items:center;gap:14px;margin-top:10px}
+.photoprev img{width:120px;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.lockadd{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.linkbox{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.linkbox input{flex:1;min-width:200px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#fff}
+.lockrow .pdf.image{background:#E6EEF6;color:#2E5A86}
+.lockrow .pdf.link{background:#EAF3EC;color:#3F6A52}
+.sheetbox .tablewrap{overflow-x:auto;margin-top:12px}
+.gsheet{width:100%;border-collapse:collapse;min-width:560px}
+.gsheet th,.gsheet td{border:1px solid var(--line);padding:10px 12px;text-align:left;font-size:14px}
+.gsheet th{background:#F3EEEA;font-size:12.5px;font-weight:600}
+.gsheet .c{text-align:center}
+.gsum{display:flex;gap:28px;flex-wrap:wrap;margin-top:14px;font-size:14px}
+.gsum span{color:var(--grey);margin-right:8px}
 @media (max-width:980px){ .two{grid-template-columns:1fr} .split{grid-template-columns:1fr} }
 .menubtn{display:none}
 @media (max-width:820px){
@@ -365,7 +381,7 @@ tr:last-child td{border-bottom:none}
   .nav .sub{font-size:14.5px}
   .nav .sub.deep{font-size:14px}
   .nav button.on::before,.nav button.on::after{display:none}
-  .main{padding:20px 16px 60px}
+  .shell > .main{padding:20px 16px 60px}
 }
 </style>
 <style>
@@ -447,8 +463,7 @@ async function boot(){
   document.getElementById('initials').textContent = me.name.split(' ').map(w=>w[0]).slice(0,2).join('');
   document.getElementById('name').textContent = me.name;
   document.getElementById('rollshow').textContent = me.email;
-  VIEW_SEM = SEM.semester;
-  OPEN.add(SEM.semester);
+  VIEW_SEM = SEM.semester;          // every semester starts closed in the sidebar
   const st = SEM.standing;
   document.getElementById('semline').textContent = st.graduated ? 'All eight semesters complete'
     : `Semester ${SEM.semester}${st.held_back ? ' · not promoted' : ''} · Lab group ${SEM.group}`;
@@ -549,7 +564,37 @@ function coursesPage(){
     later: 'Not started yet. These are the courses the curriculum sets for this semester.',
   }[sm.state];
   const warn = sm.credits_known ? '' : '<p class="foot in d1">Credits for this semester were unclear in the curriculum photo — check the booklet.</p>';
-  view(`<h1 class="page in">${ordinal(sm.n)} semester</h1><p class="lede in d1">${lede}</p>${warn}<div class="grid">${cards}</div>`);
+  view(`<h1 class="page in">${ordinal(sm.n)} semester</h1><p class="lede in d1">${lede}</p>${warn}<div class="grid">${cards}</div>${gradeSheet(sm)}`);
+}
+
+/* the semester at a glance, laid out like the university's grade sheet */
+function gradeSheet(sm){
+  const list = sm.sheet || [];
+  const has = r => r.gp !== null && r.gp !== undefined;
+  const rows = list.map(r => `<tr>
+      <td class="mono">${r.code}</td><td>${esc(r.title)}</td>
+      <td class="c mono">${r.credits ? fmt(r.credits) : '—'}</td>
+      <td class="c">${r.letter || '—'}</td>
+      <td class="c mono">${has(r) ? Number(r.gp).toFixed(2) : '—'}</td></tr>`).join('');
+  const offered = list.reduce((n, r) => n + (r.credits || 0), 0);
+  const graded = list.filter(has);
+  const earned = graded.filter(r => r.gp > 0).reduce((n, r) => n + (r.credits || 0), 0);
+  const note = sm.state === 'done' && !graded.length
+    ? 'Only the semester GPA is published for this semester, so course grades show —.'
+    : sm.state === 'done' ? '' : 'Grades appear here when the examiner publishes the results.';
+  return `<div class="box sheetbox in d3">
+    <h2>Grade sheet <span class="r">${ordinal(sm.n)} semester</span></h2>
+    <div class="tablewrap"><table class="gsheet">
+      <tr><th>Course code</th><th>Course title</th><th class="c">Credits</th><th class="c">Letter grade</th><th class="c">Grade points</th></tr>
+      ${rows}
+    </table></div>
+    <div class="gsum">
+      <div><span>Total credits offered</span><b class="mono">${fmt(offered)}</b></div>
+      <div><span>Total credits earned</span><b class="mono">${graded.length ? fmt(earned) : '—'}</b></div>
+      <div><span>GPA</span><b class="mono">${sm.gpa ? sm.gpa.toFixed(2) : '—'}</b></div>
+    </div>
+    ${note ? `<p class="tiny" style="margin-top:10px">${note}</p>` : ''}
+  </div>`;
 }
 
 /* ============================================================
@@ -578,14 +623,15 @@ function drawCourse(){
   if (TAB === 'res') return resourcesTab(head, main);
 
   const nothing = !main.items.length && !(lab && lab.items.length) && !main.attendance.summary.held;
+  let body = '';
   if (nothing){
     const sm = semData(main.semester);
     const why = sm.state === 'later' ? 'This course hasn\'t started yet.'
-              : sm.state === 'now'   ? 'No marks or attendance recorded yet.'
-              : 'Marks for this semester aren\'t loaded into the prototype.';
-    return view(head + `<div class="box in d3"><h2>No marks yet</h2><p class="lede">${why} When a teacher records something, it appears here with its full history.</p></div>`);
+              : sm.state === 'now'   ? 'Nothing has been recorded yet.'
+              : 'No marks have been entered for this course yet.';
+    body += `<div class="notice in d2">${why} Class tests, attendance and marks appear below as soon as the teacher records them, each with its full history.</div>`;
   }
-  let body = main.kind === 'theory' ? theoryPart(main) : labPart(main, true);
+  body += main.kind === 'theory' ? theoryPart(main) : labPart(main, true);
   if (lab) body += labPart(lab, false);
 
   const changed = main.changed + (lab ? lab.changed : 0);
@@ -641,6 +687,7 @@ function statusCell(i){
 }
 
 function itemRows(block){
+  if (!block.items.length) return `<tr><td colspan="4" class="emptyrow">Nothing recorded yet. Each ${block.kind === 'lab' ? 'lab mark' : 'class test'} appears here when the teacher enters it.</td></tr>`;
   return block.items.map(i => `
     <tr>
       <td>${i.label}${i.held_on ? `<div style="font-size:11.5px;color:var(--grey)">${nice(i.held_on)}</div>` : ''}</td>
@@ -656,7 +703,7 @@ function theoryPart(b){
   return `
     <div class="chips">
       <div class="chip main in d2"><div class="k">CATM so far</div><div class="v">${fmt(c.total)} <small>/ ${c.total_of}</small></div><div class="n">estimate, before any curve</div></div>
-      <div class="chip in d3"><div class="k">Class tests</div><div class="v">${fmt(c.ct)} <small>/ ${c.ct_of}</small></div><div class="n">${c.ct_rule}</div></div>
+      <div class="chip in d3"><div class="k">Class tests</div><div class="v">${fmt(c.ct)} <small>/ ${c.ct_of}</small></div><div class="n">${b.items.length ? c.ct_rule : 'no class tests yet'}</div></div>
       <div class="chip in d3"><div class="k">Attendance</div><div class="v">${fmt(c.attendance)} <small>/ ${c.attendance_of}</small></div><div class="n">${a.percent === null ? 'no classes yet' : a.present + ' of ' + a.held + ' · ' + a.percent + '%'}</div></div>
     </div>
     <div class="two">
@@ -851,9 +898,12 @@ async function resourcesTab(head, b){
   const options = r.categories.map(c => `<option value="${c.key}">${c.label}</option>`).join('');
 
   const mine = (await api(`/api/locker?course_id=${b.course_id}`)).files;
-  const files = mine.map(f => `<div class="lockrow"><span class="pdf">PDF</span>
-      <div><b>${esc(f.name)}</b><small>${mb(f.size)} · added ${when(f.at)}</small></div>
-      <button class="btn ghost small" onclick="openFile(${f.id})">Open</button>
+  const tag = {pdf: 'PDF', image: 'IMAGE', link: 'LINK'};
+  const files = mine.map(f => `<div class="lockrow"><span class="pdf ${f.kind}">${tag[f.kind] || 'FILE'}</span>
+      <div><b>${esc(f.name)}</b><small>${f.kind === 'link' ? esc(f.url) : mb(f.size)} · added ${when(f.at)}</small></div>
+      ${f.kind === 'link'
+        ? `<a class="btn ghost small" href="${esc(f.url)}" target="_blank" rel="noopener">Open</a>`
+        : `<button class="btn ghost small" onclick="openFile(${f.id})">Open</button>`}
       <button class="btn ghost small" onclick="dropFile(${f.id})">Delete</button></div>`).join('')
     || '<p class="lede">Nothing here yet.</p>';
   view(head + `
@@ -875,10 +925,19 @@ async function resourcesTab(head, b){
       </div></div>
     ${r.categories.map(shelf).join('')}
     <div class="box in d3 locker"><h2>My private files</h2>
-      <p class="lede"><b>Only you can see these.</b> No one else — not teachers, not classmates — can open them. PDFs only, up to 30 MB each, 200 MB in total.</p>
-      <label class="btn" style="margin-top:12px;display:inline-block">Add a PDF
-        <input type="file" accept="application/pdf,.pdf" hidden onchange="addFile(this, '${b.course_id}')"></label>
-      <span class="msg" id="lockMsg"></span>
+      <p class="lede"><b>Only you can see these.</b> No one else — not teachers, not classmates — can open them. PDFs and pictures (JPG, PNG, WEBP) up to 30 MB each, 200 MB in total, and links.</p>
+      <div class="lockadd">
+        <label class="btn">Add a PDF or picture
+          <input type="file" accept="application/pdf,.pdf,image/png,image/jpeg,image/webp" hidden onchange="addFile(this, '${b.course_id}')"></label>
+        <button class="btn" onclick="document.getElementById('linkBox').hidden=false">Add a link</button>
+        <span class="msg" id="lockMsg"></span>
+      </div>
+      <div class="linkbox" id="linkBox" hidden>
+        <input id="linkUrl" type="url" placeholder="https://…" aria-label="Link">
+        <input id="linkName" maxlength="120" placeholder="Name (optional)" aria-label="Name for the link">
+        <button class="btn solid small" onclick="addLink('${b.course_id}')">Save link</button>
+        <button class="btn ghost small" onclick="document.getElementById('linkBox').hidden=true">Cancel</button>
+      </div>
       <div class="lockrows">${files}</div></div>`);
 }
 
@@ -926,8 +985,16 @@ async function addFile(input, courseId){
   if (!file) return;
   msg.textContent = 'Uploading…';
   const r = await fetch(`/api/locker/upload?course_id=${courseId}`, {method:'POST',
-    headers:{Authorization:'Bearer ' + token(), 'X-Filename': encodeURIComponent(file.name), 'Content-Type':'application/pdf'}, body:file});
+    headers:{Authorization:'Bearer ' + token(), 'X-Filename': encodeURIComponent(file.name), 'Content-Type': file.type || 'application/octet-stream'}, body:file});
   const res = await r.json();
+  if (!res.ok){ msg.textContent = res.why; return; }
+  drawCourse();
+}
+async function addLink(courseId){
+  const msg = document.getElementById('lockMsg');
+  const res = await api('/api/locker/link', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({course_id: courseId, url: document.getElementById('linkUrl').value,
+                          name: document.getElementById('linkName').value})});
   if (!res.ok){ msg.textContent = res.why; return; }
   drawCourse();
 }
@@ -1031,7 +1098,12 @@ async function complaintPage(){
       <div class="field"><label for="cFix">What should be fixed?</label>
         <textarea id="cFix" rows="3" placeholder="e.g. Repair or replace the projector"></textarea></div>
       <div class="field"><label for="cPhoto">Photo (optional)</label>
-        <input id="cPhoto" type="file" accept="image/png,image/jpeg,image/webp"></div>
+        <input id="cPhoto" type="file" accept="image/png,image/jpeg,image/webp" onchange="pickPhoto(this)">
+        <div class="photoprev" id="cPrev" hidden>
+          <img id="cPrevImg" alt="The photo you picked">
+          <button type="button" class="btn ghost small" onclick="dropPhoto()">✕ Remove photo</button>
+        </div>
+        <div class="tiny" style="margin-top:6px">The photo is sent with the email to the chairman and office. The website doesn't keep a copy.</div></div>
       <p class="tiny">Your name is not shown to the office or the chairman. It is kept only so a complaint flagged as unnecessary can be tied to the account that sent it.</p>
       <button class="btn solid" id="cSend" onclick="sendComplaint()">Send complaint</button>
       <div class="msg" id="cMsg"></div>
@@ -1039,24 +1111,38 @@ async function complaintPage(){
     ${mine ? `<div class="box in d3"><h2>Your complaints</h2><ul class="mylist">${mine}</ul></div>` : ''}`);
 }
 
+function pickPhoto(input){
+  const f = input.files[0], box = document.getElementById('cPrev');
+  if (!f){ box.hidden = true; return; }
+  document.getElementById('cPrevImg').src = URL.createObjectURL(f);
+  box.hidden = false;
+}
+function dropPhoto(){
+  document.getElementById('cPhoto').value = '';
+  document.getElementById('cPrev').hidden = true;
+}
+const asBase64 = file => new Promise((ok, bad) => {
+  const r = new FileReader();
+  r.onload = () => ok(String(r.result).split(',')[1]);
+  r.onerror = bad;
+  r.readAsDataURL(file);
+});
+
 async function sendComplaint(){
   const msg = document.getElementById('cMsg'), btn = document.getElementById('cSend');
   msg.textContent = ''; btn.disabled = true;
-  const res = await api('/api/complaint', {method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({what: document.getElementById('cWhat').value,
-                          why: document.getElementById('cWhy').value,
-                          fix: document.getElementById('cFix').value})});
-  if (!res.ok){ msg.textContent = res.why; btn.disabled = false; return; }
   const file = document.getElementById('cPhoto').files[0];
-  let photoNote = '';
-  if (file){
-    const up = await api('/api/complaint/photo?id=' + res.id, {method: 'POST',
-      headers: {'X-Filename': encodeURIComponent(file.name)}, body: file});
-    photoNote = up.ok ? '' : ' The photo could not be added: ' + up.why;
-  }
+  if (file && file.size > 5 * 1024 * 1024){ msg.textContent = 'The photo must be under 5 MB.'; btn.disabled = false; return; }
+  const body = {what: document.getElementById('cWhat').value,
+                why: document.getElementById('cWhy').value,
+                fix: document.getElementById('cFix').value};
+  if (file){ body.photo = await asBase64(file); body.photo_name = file.name; }
+  const res = await api('/api/complaint', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)});
+  if (!res.ok){ msg.textContent = res.why; btn.disabled = false; return; }
   document.getElementById('cform').innerHTML = `
     <h2 class="okhead">Successfully submitted</h2>
-    <p class="lede">Thank you. Complaint #${res.id} has been sent to the chairman and the department office.${esc(photoNote)}</p>
+    <p class="lede">Thank you. Complaint #${res.id} has been sent to the chairman and the department office${file ? ', with your photo attached to the email' : ''}.</p>
     <button class="btn" onclick="complaintPage()">Send another</button>`;
 }
 

@@ -330,6 +330,11 @@ def course_result(course_id, roll):
 def semester_view(roll):
     st = standing(roll)
     results = semester_results(roll)
+    course_results = {}                       # every published course result, read once
+    for e in chain_entries(["course_result"]):
+        d = e["detail"]
+        if d["roll"] == roll:
+            course_results[d["course_id"]] = d
 
     semesters = []
     for n in range(1, 9):
@@ -356,7 +361,13 @@ def semester_view(roll):
             state = "past"                   # finished, but no published result in the prototype
         else:
             state = "later"
-        semesters.append({"n": n, "state": state, "courses": cards,
+        sheet = []
+        for c in courses:
+            r = course_results.get(c["course_id"]) if state == "done" else None
+            sheet.append({"code": c["code"], "title": c["title"], "credits": c["credits"],
+                          "letter": r.get("letter") if r else None,
+                          "gp": r.get("gp") if r else None})
+        semesters.append({"n": n, "state": state, "courses": cards, "sheet": sheet,
                           "gpa": results[n]["gpa"] if n in results else None,
                           "credits_known": all(c["credits"] for c in courses)})
 
@@ -756,23 +767,51 @@ def init_locker():
         id INTEGER PRIMARY KEY AUTOINCREMENT, roll TEXT, course_id TEXT,
         name TEXT, path TEXT, size INTEGER, uploaded_at TEXT)""")
     con.commit()
+    try:
+        con.execute("SELECT url FROM locker LIMIT 1")
+    except Exception:
+        con.rollback()
+        con.execute("ALTER TABLE locker ADD COLUMN url TEXT")   # links saved in the locker
+        con.commit()
     con.close()
+    db.forget_tables()
 
 
 def locker_list(roll, course_id):
-    return [{"id": i, "name": n, "size": z, "at": at}
-            for i, n, z, at in rows("SELECT id, name, size, uploaded_at FROM locker "
-                                    "WHERE roll=? AND course_id=? ORDER BY id DESC", (roll, course_id))]
+    def kind(name, url):
+        if url:
+            return "link"
+        return "pdf" if (name or "").lower().endswith(".pdf") else "image"
+    return [{"id": i, "name": n, "size": z or 0, "at": at, "kind": kind(n, u), "url": u or ""}
+            for i, n, z, at, u in rows("SELECT id, name, size, uploaded_at, url FROM locker "
+                                       "WHERE roll=? AND course_id=? ORDER BY id DESC", (roll, course_id))]
+
+
+def locker_link(roll, course_id, url, name):
+    url = (url or "").strip()
+    if not url.lower().startswith(("http://", "https://")):
+        raise Refused("A link must start with http:// or https://")
+    if len(url) > 1000:
+        raise Refused("That link is too long.")
+    if not rows("SELECT 1 FROM enrollments WHERE roll=? AND course_id=?", (roll, course_id)):
+        raise Refused("You aren't enrolled in that course.")
+    con = connect()
+    con.execute("INSERT INTO locker (roll, course_id, name, path, size, uploaded_at, url) VALUES (?,?,?,?,?,?,?)",
+                (roll, course_id, ((name or "").strip() or url)[:120], "", 0,
+                 dt.datetime.now().isoformat(timespec="minutes"), url))
+    con.commit()
+    con.close()
 
 
 def locker_save(roll, course_id, filename, data):
-    used = rows("SELECT COALESCE(SUM(size),0) FROM locker WHERE roll=?", (roll,))[0][0]
+    used = rows("SELECT COALESCE(SUM(size),0) FROM locker WHERE roll=?", (roll,))[0][0] or 0
     contract.check_locker(filename, len(data), used)
     if not rows("SELECT 1 FROM enrollments WHERE roll=? AND course_id=?", (roll, course_id)):
         raise Refused("You aren't enrolled in that course.")
     folder = os.path.join("uploads", roll, "locker")
     os.makedirs(folder, exist_ok=True)
-    path = os.path.join(folder, hashlib.sha256(data).hexdigest()[:16] + ".pdf")
+    ext = os.path.splitext(filename)[1].lower() or ".pdf"
+    path = os.path.join(folder, hashlib.sha256(data).hexdigest()[:16] + ext)
     db.save_file(path, data)
     con = connect()
     con.execute("INSERT INTO locker (roll, course_id, name, path, size, uploaded_at) VALUES (?,?,?,?,?,?)",
@@ -1077,9 +1116,21 @@ class Handler(SimpleHTTPRequestHandler):
             return self.reply({"ok": True, "known": sorted(COPIES)})
 
         # ---- the only POSTs allowed without being signed in ----
-        if url.path in ("/api/register/start", "/api/register/finish", "/api/signin"):
+        if url.path in ("/api/register/start", "/api/register/finish", "/api/signin",
+                        "/api/register/staff-start", "/api/register/staff-finish"):
             body = json.loads(self.rfile.read(length) or "{}")
             try:
+                if url.path == "/api/register/staff-start":
+                    status, shown = auth.staff_register_start(body.get("email"))
+                    out = {"ok": True, "emailed": status == "sent"}
+                    if shown:
+                        out["code"] = shown
+                    return self.reply(out)
+                if url.path == "/api/register/staff-finish":
+                    email, role = auth.staff_register_finish(body.get("email"), body.get("code"),
+                                                             body.get("password"))
+                    token, role = auth.sign_in(email, body.get("password"), body.get("remember"))
+                    return self.reply({"ok": True, "token": token, "role": role})
                 if url.path == "/api/register/start":
                     status, shown = auth.start_registration(
                         body.get("email"), body.get("father"), body.get("mother"),
@@ -1379,11 +1430,18 @@ class Handler(SimpleHTTPRequestHandler):
         body = json.loads(self.rfile.read(length) or "{}")
 
         try:
+            if url.path == "/api/locker/link":
+                locker_link(roll, body.get("course_id"), body.get("url"), body.get("name"))
+                return self.reply({"ok": True})
+
             if url.path == "/api/locker/delete":
-                path = owned_file(roll, locker_id=body.get("id"))
-                if not path:
+                is_link = rows("SELECT 1 FROM locker WHERE id=? AND roll=? AND url IS NOT NULL AND url != ''",
+                               (body.get("id"), roll))
+                path = None if is_link else owned_file(roll, locker_id=body.get("id"))
+                if not path and not is_link:
                     raise Refused("Not found.")
-                db.delete_file(path)
+                if path:
+                    db.delete_file(path)
                 con = connect()
                 con.execute("DELETE FROM locker WHERE id=? AND roll=?", (body.get("id"), roll))
                 con.commit()
@@ -1391,7 +1449,14 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply({"ok": True})
 
             if url.path == "/api/complaint":
-                cid = complaints.file(roll, body.get("what"), body.get("why"), body.get("fix"))
+                photo = None
+                if body.get("photo"):
+                    import base64
+                    try:
+                        photo = (str(body.get("photo_name") or "photo.jpg"), base64.b64decode(body["photo"]))
+                    except Exception:
+                        raise Refused("The photo could not be read. Try a different picture.")
+                cid = complaints.file(roll, body.get("what"), body.get("why"), body.get("fix"), photo)
                 return self.reply({"ok": True, "id": cid})
 
             if url.path == "/api/project":

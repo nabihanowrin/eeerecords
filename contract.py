@@ -981,20 +981,20 @@ def check_upload(kind, filename, size):
 
 
 # private locker: a student's own PDFs, visible to nobody else
-LOCKER_FILE = 5 * 1024 * 1024          # 30 MB per file
-LOCKER_TOTAL = 10 * 1024 * 1024        # 200 MB per student
+LOCKER_FILE = 30 * 1024 * 1024          # 30 MB per file
+LOCKER_TOTAL = 200 * 1024 * 1024        # 200 MB per student
 
 
 def check_locker(filename, size, used):
-    if not filename.lower().endswith(".pdf"):
-        raise Refused("The locker takes PDF files only.")
+    if not filename.lower().endswith((".pdf", ".png", ".jpg", ".jpeg", ".webp")):
+        raise Refused("The locker takes PDFs and pictures (JPG, PNG, WEBP).")
     if size == 0:
         raise Refused("That file is empty.")
     if size > LOCKER_FILE:
-        raise Refused("That file is over 5 MB.")
+        raise Refused("That file is over 30 MB.")
     if used + size > LOCKER_TOTAL:
         left = max(0, LOCKER_TOTAL - used) // (1024 * 1024)
-        raise Refused(f"Your locker is nearly full — {left} MB left of 10 MB.")
+        raise Refused(f"Your locker is nearly full — {left} MB left of 200 MB.")
 
 
 # ==================================================================

@@ -46,7 +46,22 @@ def chairman_address():
     return (os.environ.get("CHAIRMAN_EMAIL") or "").strip().lower() or None
 
 
-def file(roll, what, why, fix):
+def _check_photo(photo):
+    """photo = (filename, bytes) or None. Returns (filename, bytes, mime) or None."""
+    if not photo or not photo[1]:
+        return None
+    name, data = photo
+    ext = "." + name.rsplit(".", 1)[-1].lower() if "." in name else ""
+    if ext not in IMAGE_TYPES:
+        raise Refused("The photo must be an image (" + ", ".join(sorted(e[1:].upper() for e in IMAGE_TYPES)) + ").")
+    if len(data) > MAX_UPLOAD:
+        raise Refused("The photo must be under 5 MB.")
+    mime = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}.get(ext, "image/jpeg")
+    return (f"complaint-photo{ext}", data, mime)
+
+
+def file(roll, what, why, fix, photo=None):
+    """photo is only attached to the email to the chairman and office; it is never stored."""
     what, why, fix = (what or "").strip(), (why or "").strip(), (fix or "").strip()
     if not what or not why or not fix:
         raise Refused("Please fill in all three: what is wrong, why it is a problem, and what should be fixed.")
@@ -59,8 +74,9 @@ def file(roll, what, why, fix):
     if today >= PER_DAY:
         con.close()
         raise Refused(f"You can send up to {PER_DAY} complaints a day.")
-    cur = con.execute("INSERT INTO complaints (roll, what, why, fix, created_at) VALUES (?,?,?,?,?)",
-                      (roll, what, why, fix, _now()))
+    attachment = _check_photo(photo)
+    cur = con.execute("INSERT INTO complaints (roll, what, why, fix, image, created_at) VALUES (?,?,?,?,?,?)",
+                      (roll, what, why, fix, "emailed" if attachment else None, _now()))
     cid = cur.lastrowid
     con.commit()
     con.close()
@@ -70,10 +86,11 @@ def file(roll, what, why, fix):
 
     body = (f"A facilities complaint was sent through EEE Records (#{cid}).\n\n"
             f"What is wrong:\n{what}\n\nWhy it is a problem:\n{why}\n\nWhat should be fixed:\n{fix}\n\n"
-            "The sender's name is not shown. Any photo is on the office's Complaints page.")
+            "The sender's name is not shown."
+            + (" The photo the student sent is attached; the website does not keep a copy." if attachment else ""))
     subject = f"Facilities complaint #{cid}: {what[:60]}"
     for to in {chairman_address(), mailer.office_address()} - {None}:
-        mailer.send_later(to, subject, body)
+        mailer.send_later(to, subject, body, attachment)
     return cid
 
 
@@ -109,7 +126,8 @@ def for_office():
     rows = con.execute("SELECT id, what, why, fix, image, created_at, flagged, flagged_by, flagged_at "
                        "FROM complaints ORDER BY id DESC").fetchall()
     con.close()
-    return [{"id": i, "what": w, "why": y, "fix": x, "photo": bool(img), "at": a,
+    return [{"id": i, "what": w, "why": y, "fix": x, "photo": bool(img) and img != "emailed",
+             "photo_emailed": img == "emailed", "at": a,
              "flagged": bool(f), "flagged_by": fb, "flagged_at": fa}
             for i, w, y, x, img, a, f, fb, fa in rows]
 

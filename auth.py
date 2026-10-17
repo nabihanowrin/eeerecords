@@ -20,6 +20,14 @@ from contract import Refused
 
 DOMAIN = "std.cu.ac.bd"
 STAFF_DOMAIN = "cu.ac.bd"
+# For testing email delivery: these three inboxes may create a staff account
+# with the role shown, even though they are not @cu.ac.bd. Students still need
+# @std.cu.ac.bd. Remove an address here to close it again.
+TEST_STAFF = {
+    "teacher.demo.eee@gmail.com": "teacher",
+    "office.demo.eee@gmail.com": "office",
+    "nebanowyn92@gmail.com": "examiner",
+}
 MAX_TRIES = 5
 LOCK_MINUTES = 15
 CODE_MINUTES = 10
@@ -249,11 +257,60 @@ def finish_registration(email, code, password):
     return email
 
 
+def staff_register_start(email):
+    """A test staff inbox asks for a sign-up code. Returns (status, code_to_show)."""
+    email = (email or "").strip().lower()
+    if email not in TEST_STAFF:
+        raise Refused("Staff accounts are set up by the office. This email can't sign up here.")
+    key = "register:" + email
+    check_lock(key)
+    if _one("SELECT 1 FROM accounts WHERE email=?", (email,)):
+        raise Refused("This email already has an account. Sign in instead.")
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    expires = (_now() + dt.timedelta(minutes=CODE_MINUTES)).isoformat()
+    _run("INSERT OR REPLACE INTO pending VALUES (?,?,?,0)", (email, sha(code), expires))
+    import mailer
+    status, _ = mailer.send(email, "Your EEE Records staff sign-up code",
+                            f"Your code is {code}\n\nIt works for {CODE_MINUTES} minutes. "
+                            f"It creates the {TEST_STAFF[email]} account for this email.")
+    if status != "sent":
+        print(f"\n  >>> Staff sign-up code for {email}: {code}  (email {status})\n", flush=True)
+        if SHOW_CODE_WHEN_EMAIL_OFF:
+            return status, code
+    elif SHOW_CODE == "always":
+        return status, code
+    return status, None
+
+
+def staff_register_finish(email, code, password):
+    email = (email or "").strip().lower()
+    if email not in TEST_STAFF:
+        raise Refused("This email can't sign up here.")
+    row = _one("SELECT code_hash, expires, tries FROM pending WHERE email=?", (email,))
+    if not row:
+        raise Refused("Start again — no code was sent to this email.")
+    if dt.datetime.fromisoformat(row[1]) < _now():
+        _run("DELETE FROM pending WHERE email=?", (email,))
+        raise Refused("That code has expired. Start again for a new one.")
+    if not hmac.compare_digest(sha((code or "").strip()), row[0]):
+        tries = row[2] + 1
+        if tries >= MAX_TRIES:
+            _run("DELETE FROM pending WHERE email=?", (email,))
+            raise Refused("Too many wrong codes. Start again for a new one.")
+        _run("UPDATE pending SET tries=? WHERE email=?", (tries, email))
+        raise Refused(f"Wrong code. {MAX_TRIES - tries} tr{'ies' if MAX_TRIES - tries != 1 else 'y'} left.")
+    if len(password or "") < 8:
+        raise Refused("Choose a password of at least 8 characters.")
+    create_staff_account(email, TEST_STAFF[email], password)
+    _run("DELETE FROM pending WHERE email=?", (email,))
+    return email, TEST_STAFF[email]
+
+
 def create_staff_account(email, role, password):
-    """Staff sign in with their @cu.ac.bd address. Used by the seed."""
+    """Staff sign in with their @cu.ac.bd address (or a TEST_STAFF inbox)."""
     email = email.strip().lower()
     local, domain = email.rsplit("@", 1)
-    if domain != STAFF_DOMAIN:
+    if domain != STAFF_DOMAIN and email not in TEST_STAFF:
         raise Refused(f"Staff accounts use @{STAFF_DOMAIN}.")
     salt = secrets.token_hex(16)
     _run("INSERT OR REPLACE INTO accounts VALUES (?,?,?,?,?,?)",

@@ -96,6 +96,9 @@ def allowed(address):
         return False
     if address in (office_address(), _env("CHAIRMAN_EMAIL").lower() or None):
         return True
+    import auth                                   # the three test staff inboxes
+    if address in auth.TEST_STAFF:
+        return True
     local, domain = address.rsplit("@", 1)
     if domain != STUDENT_DOMAIN:
         return False
@@ -130,12 +133,21 @@ def _gmail_access_token():
         return _token["value"]
 
 
-def _via_gmail_api(to, subject, text):
+def _attach(msg, attachment):
+    """attachment = (filename, bytes, mime type) or None"""
+    if attachment:
+        name, data, mime = attachment
+        main, sub = (mime or "application/octet-stream").split("/", 1)
+        msg.add_attachment(data, maintype=main, subtype=sub, filename=name)
+
+
+def _via_gmail_api(to, subject, text, attachment=None):
     msg = EmailMessage()
     msg["From"] = f'{_env("MAIL_FROM_NAME", "EEE Records")} <{_env("MAIL_FROM")}>'
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(text)
+    _attach(msg, attachment)
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
     ask = Request("https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
                   data=json.dumps({"raw": raw}).encode(), method="POST",
@@ -151,13 +163,17 @@ def _via_gmail_api(to, subject, text):
         raise
 
 
-def _via_brevo(to, subject, text):
-    body = json.dumps({
+def _via_brevo(to, subject, text, attachment=None):
+    payload = {
         "sender": {"email": _env("MAIL_FROM"), "name": _env("MAIL_FROM_NAME", "EEE Records")},
         "to": [{"email": to}],
         "subject": subject,
         "textContent": text,
-    }).encode()
+    }
+    if attachment:
+        payload["attachment"] = [{"name": attachment[0],
+                                  "content": base64.b64encode(attachment[1]).decode()}]
+    body = json.dumps(payload).encode()
     ask = Request("https://api.brevo.com/v3/smtp/email", data=body, method="POST",
                   headers={"api-key": _env("BREVO_API_KEY"), "accept": "application/json",
                            "content-type": "application/json"})
@@ -166,20 +182,21 @@ def _via_brevo(to, subject, text):
             raise RuntimeError(f"Brevo answered {answer.status}")
 
 
-def _via_gmail(to, subject, text):
+def _via_gmail(to, subject, text, attachment=None):
     sender, password = _smtp_secret()
     msg = EmailMessage()
     msg["From"] = f"EEE Records <{sender}>"
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(text)
+    _attach(msg, attachment)
     with smtplib.SMTP_SSL("smtp.gmail.com", 465,
                           context=ssl.create_default_context(), timeout=20) as server:
         server.login(sender, password)
         server.send_message(msg)
 
 
-def send(to, subject, body):
+def send(to, subject, body, attachment=None):
     """
     Tries to send one email now. Always returns (status, note):
       sent     — the email service accepted it
@@ -194,7 +211,7 @@ def send(to, subject, body):
         return "off", "email is not set up on this computer"
     sender = {"gmail-api": _via_gmail_api, "brevo": _via_brevo, "gmail": _via_gmail}[how]
     try:
-        sender(to, subject, body + FOOTER)
+        sender(to, subject, body + FOOTER, attachment)
         return "sent", f"accepted for delivery ({how})"
     except smtplib.SMTPAuthenticationError:
         return "failed", "Google rejected the app password"
@@ -220,13 +237,13 @@ _worker = None
 
 def _work():
     while True:
-        to, subject, body = _queue.get()
-        status, note = send(to, subject, body)
+        to, subject, body, attachment = _queue.get()
+        status, note = send(to, subject, body, attachment)
         print(f"  [mail] {status}: {subject} -> {to} ({note})", flush=True)
         _queue.task_done()
 
 
-def send_later(to, subject, body):
+def send_later(to, subject, body, attachment=None):
     """Queue an email and return at once. Nothing happens if it isn't allowed."""
     global _worker
     if not allowed(to) or not method():
@@ -234,5 +251,5 @@ def send_later(to, subject, body):
     if _worker is None or not _worker.is_alive():
         _worker = threading.Thread(target=_work, daemon=True)
         _worker.start()
-    _queue.put((to, subject, body))
+    _queue.put((to, subject, body, attachment))
     return True

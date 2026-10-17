@@ -553,6 +553,7 @@ async function complaintsPage(){
       <p class="lede"><b>Why it is a problem:</b> ${esc(c.why)}</p>
       <p class="lede"><b>What should be fixed:</b> ${esc(c.fix)}</p>
       ${c.photo ? `<img class="cphoto" data-id="${c.id}" alt="Photo sent with complaint ${c.id}">` : ''}
+      ${c.photo_emailed ? `<p class="lede" style="margin-top:8px">📎 A photo came with this complaint. It was attached to the email to the chairman and office; the website doesn't keep a copy.</p>` : ''}
       <div style="margin-top:12px">${c.flagged
         ? `<span class="pill no">Flagged as unnecessary</span> <span class="tiny">by ${esc(c.flagged_by)} · ${when(c.flagged_at)}</span>`
         : `<button class="btn" onclick="flagComplaint(${c.id})">Flag as unnecessary</button>`}</div>

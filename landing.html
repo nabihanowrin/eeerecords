@@ -471,6 +471,23 @@ body{animation:pageIn .5s ease backwards}
         <label class="check"><input type="checkbox" id="adRemember" checked> Remember me on this browser</label>
         <button class="btn" onclick="staffSignIn('admin')">Sign in</button>
         <div class="msg" id="adMsg"></div>
+        <button class="back" style="margin-left:0;margin-top:14px" onclick="staffJoin('ad')">First time? Create your account</button>
+        <div id="adJoin" class="hide" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
+          <div class="field"><label for="adJEmail">Your email</label>
+            <input id="adJEmail" type="email" autocomplete="username"></div>
+          <button class="btn" onclick="staffCode('ad')">Send me a code</button>
+          <div id="adJStep2" class="hide" style="margin-top:16px">
+            <p style="font-size:14px;color:var(--grey);margin-bottom:12px" id="adJWhere"></p>
+            <div class="field"><label for="adJCode">Code</label>
+              <input id="adJCode" inputmode="numeric" maxlength="6" style="max-width:180px"></div>
+            <div class="field"><label for="adJPw">Choose a password</label>
+              <input id="adJPw" type="password" autocomplete="new-password"><div class="hint">At least 8 characters.</div></div>
+            <div class="field"><label for="adJPw2">Type it again</label>
+              <input id="adJPw2" type="password" autocomplete="new-password"></div>
+            <button class="btn" onclick="staffFinish('ad', 'admin')">Create my account</button>
+          </div>
+          <div class="msg" id="adJMsg"></div>
+        </div>
       </div>
 
       <!-- teacher -->
@@ -483,6 +500,23 @@ body{animation:pageIn .5s ease backwards}
         <label class="check"><input type="checkbox" id="tcRemember" checked> Remember me on this browser</label>
         <button class="btn" onclick="staffSignIn('teacher')">Sign in</button>
         <div class="msg" id="tcMsg"></div>
+        <button class="back" style="margin-left:0;margin-top:14px" onclick="staffJoin('tc')">First time? Create your account</button>
+        <div id="tcJoin" class="hide" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
+          <div class="field"><label for="tcJEmail">Your email</label>
+            <input id="tcJEmail" type="email" autocomplete="username"></div>
+          <button class="btn" onclick="staffCode('tc')">Send me a code</button>
+          <div id="tcJStep2" class="hide" style="margin-top:16px">
+            <p style="font-size:14px;color:var(--grey);margin-bottom:12px" id="tcJWhere"></p>
+            <div class="field"><label for="tcJCode">Code</label>
+              <input id="tcJCode" inputmode="numeric" maxlength="6" style="max-width:180px"></div>
+            <div class="field"><label for="tcJPw">Choose a password</label>
+              <input id="tcJPw" type="password" autocomplete="new-password"><div class="hint">At least 8 characters.</div></div>
+            <div class="field"><label for="tcJPw2">Type it again</label>
+              <input id="tcJPw2" type="password" autocomplete="new-password"></div>
+            <button class="btn" onclick="staffFinish('tc', 'teacher')">Create my account</button>
+          </div>
+          <div class="msg" id="tcJMsg"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -797,6 +831,37 @@ async function staffSignIn(kind){
 
 function ordinal(n){ const t = ['th','st','nd','rd'], v = n % 100; return n + (t[(v - 20) % 10] || t[v] || t[0]); }
 
+/* ---------- staff sign-up (for now only the three test inboxes the site allows) ---------- */
+function staffJoin(p){ document.getElementById(p + 'Join').classList.toggle('hide'); }
+async function staffCode(p){
+  const msg = document.getElementById(p + 'JMsg');
+  msg.textContent = '';
+  const email = document.getElementById(p + 'JEmail').value.trim().toLowerCase();
+  const res = await post('/api/register/staff-start', {email});
+  if (!res.ok){ msg.textContent = res.why; return; }
+  document.getElementById(p + 'JWhere').textContent = res.code
+    ? `Email isn't working on this server right now, so your code is shown here: ${res.code}`
+    : `A 6-digit code is on its way to ${email}. Check the inbox (and spam) — it can take a minute.`;
+  if (res.code) document.getElementById(p + 'JCode').value = res.code;
+  document.getElementById(p + 'JStep2').classList.remove('hide');
+}
+async function staffFinish(p, kind){
+  const msg = document.getElementById(p + 'JMsg');
+  msg.textContent = '';
+  const pw = document.getElementById(p + 'JPw').value;
+  if (pw !== document.getElementById(p + 'JPw2').value){ msg.textContent = "The two passwords don't match."; return; }
+  const res = await post('/api/register/staff-finish', {
+    email: document.getElementById(p + 'JEmail').value, code: document.getElementById(p + 'JCode').value,
+    password: pw, remember: true});
+  if (!res.ok){ msg.textContent = res.why; return; }
+  const allowed = kind === 'teacher' ? ['teacher'] : ['office', 'examiner'];
+  if (!allowed.includes(res.role)){
+    msg.textContent = `Account created as ${res.role}. Sign in on the ${res.role === 'teacher' ? 'Teacher' : 'Admin'} tab.`;
+    return;
+  }
+  keep(res.token, true, res.role, msg);
+}
+
 /* ---------- register ---------- */
 async function regStart(){
   const msg = document.getElementById('r1Msg');
@@ -1088,7 +1153,7 @@ async function signOutHere(){
   }
 
   /* ---- timeline: about 2.5 seconds, then the account page opens ---- */
-  const T_SLIDE = 250, HOLD = 600;
+  const T_SLIDE = 100, HOLD = 500;   // HOLD = pause after the title is written, before the fade (ms)
   const uni = document.getElementById('eee-uni');
   let t0, raf, done, slideMs, goNext, lettersDone;
 
@@ -1130,7 +1195,7 @@ async function signOutHere(){
     // wait for the title font, but never more than a moment
     try { await Promise.race([document.fonts.load('700 30px Montserrat'), new Promise(r => setTimeout(r, 300))]); } catch (e) {}
     buildTitle();
-    slideMs = rowsInfo.length > 1 ? 650 : 1500;
+    slideMs = rowsInfo.length > 1 ? 400 : 1000;   // how long the title takes to appear (ms): phone (per line) : computer
     if (reduce) {
       arcs.forEach(a => a.style.opacity = 1);
       rowsInfo.forEach(r => setRow(r, 1));
