@@ -202,13 +202,25 @@ a.slide:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .back{background:none;border:none;color:var(--grey);font-size:13px;cursor:pointer;text-decoration:underline;margin-left:14px}
 
 /* ---------------- footer ---------------- */
-footer{background:var(--ink);color:#AEBBC4;padding:70px 0 40px}
+footer{background:var(--ink);color:#AEBBC4;padding:70px 0 0}
 footer .cols{display:grid;grid-template-columns:1.1fr 1fr 1.5fr;gap:40px}
 footer h3{color:#fff;font-size:15px;font-weight:600;margin-bottom:14px}
 footer p,footer li{font-size:14px;line-height:1.8}
 footer ul{list-style:none}
 footer a{color:#AEBBC4}
 footer a:hover{color:#fff}
+footer ul.bullets{list-style:disc;padding-left:18px}
+footer ul.bullets li::marker{color:#6F8290}
+.social{margin-top:26px}
+.social ul{display:grid;grid-template-columns:repeat(2,max-content);gap:10px 22px}
+.social a{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.social a span{text-decoration:underline}
+.social .sq{width:28px;height:28px;border-radius:5px;display:grid;place-items:center;flex:none}
+.social .sq svg{width:16px;height:16px;fill:#fff}
+.social .sq.fb{background:#3B5998}
+.social .sq.web{background:#4A5B66}
+.copybar{background:var(--accent);color:#F3DDE1;margin-top:40px;font-size:13.5px}
+.copybar .wrap{display:flex;justify-content:space-between;gap:10px 30px;flex-wrap:wrap;padding-top:16px;padding-bottom:16px}
 .todo{color:#6F8290;font-style:italic}
 details{border-top:1px solid #33434E;padding:12px 0}
 details:last-child{border-bottom:1px solid #33434E}
@@ -222,6 +234,7 @@ details p{margin-top:8px;font-size:13.5px;line-height:1.6}
 .hide{display:none}
 @media (max-width:900px){
   .frame,.drift .grid,footer .cols{grid-template-columns:1fr}
+  .social ul{grid-template-columns:1fr}
   .facts .row{grid-template-columns:1fr 1fr;gap:26px 0}
   .facts .cell:nth-child(3){border-left:none;padding-left:0}
   .facts .cell{border-left:none;padding:20px 0;border-top:1px solid var(--line)}
@@ -409,6 +422,32 @@ body{animation:pageIn .5s ease backwards}
       <!-- signed in, choose where to open it -->
       <div id="handoff" class="hide"></div>
 
+      <!-- forgot password: a code to the inbox, then a new password -->
+      <div id="resetPane" class="hide">
+        <p style="font-size:16px;font-weight:600;margin-bottom:6px">Reset your password</p>
+        <p style="color:var(--grey);font-size:14.5px;margin-bottom:18px">We'll email a 6-digit code to the email you sign in with.</p>
+        <div id="rs1">
+          <div class="field"><label for="rsEmail">Your email</label>
+            <input id="rsEmail" type="email" autocomplete="username"></div>
+          <button class="btn" onclick="resetStart()">Email me a code</button>
+          <div class="msg" id="rs1Msg"></div>
+        </div>
+        <div id="rs2" class="hide">
+          <p style="font-size:14px;color:var(--grey);margin-bottom:16px">A code is on its way to <b id="rsSent"></b>. Check your inbox — it can take a minute.</p>
+          <div class="field"><label for="rsCode">Code</label>
+            <input id="rsCode" inputmode="numeric" maxlength="6" style="max-width:180px;font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:.2em"></div>
+          <div class="field"><label for="rsPw">New password</label>
+            <input id="rsPw" type="password" autocomplete="new-password"><div class="hint">At least 8 characters. Not your email password.</div></div>
+          <div class="field"><label for="rsPw2">Type it again</label>
+            <input id="rsPw2" type="password" autocomplete="new-password"></div>
+          <label class="check"><input type="checkbox" id="rsRemember" checked> Remember me on this browser</label>
+          <button class="btn" onclick="resetFinish()">Set new password</button>
+          <button class="back" onclick="resetAgain()">Start again</button>
+          <div class="msg" id="rs2Msg"></div>
+        </div>
+        <button class="back" style="margin-left:0;margin-top:18px" onclick="closeReset()">← Back to sign in</button>
+      </div>
+
       <!-- student -->
       <div id="studentPane">
         <div class="tabs">
@@ -424,6 +463,7 @@ body{animation:pageIn .5s ease backwards}
           <label class="check"><input type="checkbox" id="inRemember" checked> Remember me on this browser</label>
           <button class="btn" onclick="signIn()">Sign in</button>
           <div class="msg" id="inMsg"></div>
+          <button class="back" style="margin-left:0;margin-top:6px" onclick="openReset('studentPane','inEmail')">Forgot your password?</button>
         </div>
 
         <div id="paneReg" class="hide">
@@ -472,6 +512,7 @@ body{animation:pageIn .5s ease backwards}
         <button class="btn" onclick="staffSignIn('admin')">Sign in</button>
         <div class="msg" id="adMsg"></div>
         <button class="back" style="margin-left:0;margin-top:14px" onclick="staffJoin('ad')">First time? Create your account</button>
+        <button class="back" style="margin-top:14px" onclick="openReset('adminPane','adEmail')">Forgot your password?</button>
         <div id="adJoin" class="hide" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
           <div class="field"><label for="adJEmail">Your email</label>
             <input id="adJEmail" type="email" autocomplete="username"></div>
@@ -501,6 +542,7 @@ body{animation:pageIn .5s ease backwards}
         <button class="btn" onclick="staffSignIn('teacher')">Sign in</button>
         <div class="msg" id="tcMsg"></div>
         <button class="back" style="margin-left:0;margin-top:14px" onclick="staffJoin('tc')">First time? Create your account</button>
+        <button class="back" style="margin-top:14px" onclick="openReset('teacherPane','tcEmail')">Forgot your password?</button>
         <div id="tcJoin" class="hide" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
           <div class="field"><label for="tcJEmail">Your email</label>
             <input id="tcJEmail" type="email" autocomplete="username"></div>
@@ -535,14 +577,26 @@ body{animation:pageIn .5s ease backwards}
           Extension: 4392<br>
           Fax: 88-031-2606014, 2606145<br>
           Website: <a href="https://cu.ac.bd/eee/" target="_blank" rel="noopener">cu.ac.bd/eee</a></p>
+        <div class="social">
+          <h3>Stay connected</h3>
+          <!-- icons: Font Awesome Free (fontawesome.com/license/free) -->
+          <ul>
+            <li><a href="https://cu.ac.bd/" target="_blank" rel="noopener noreferrer"><i class="sq web"><svg viewBox="0 0 640 640" aria-hidden="true" focusable="false"><path d="M415.9 344L225 344C227.9 408.5 242.2 467.9 262.5 511.4C273.9 535.9 286.2 553.2 297.6 563.8C308.8 574.3 316.5 576 320.5 576C324.5 576 332.2 574.3 343.4 563.8C354.8 553.2 367.1 535.8 378.5 511.4C398.8 467.9 413.1 408.5 416 344zM224.9 296L415.8 296C413 231.5 398.7 172.1 378.4 128.6C367 104.2 354.7 86.8 343.3 76.2C332.1 65.7 324.4 64 320.4 64C316.4 64 308.7 65.7 297.5 76.2C286.1 86.8 273.8 104.2 262.4 128.6C242.1 172.1 227.8 231.5 224.9 296zM176.9 296C180.4 210.4 202.5 130.9 234.8 78.7C142.7 111.3 74.9 195.2 65.5 296L176.9 296zM65.5 344C74.9 444.8 142.7 528.7 234.8 561.3C202.5 509.1 180.4 429.6 176.9 344L65.5 344zM463.9 344C460.4 429.6 438.3 509.1 406 561.3C498.1 528.6 565.9 444.8 575.3 344L463.9 344zM575.3 296C565.9 195.2 498.1 111.3 406 78.7C438.3 130.9 460.4 210.4 463.9 296L575.3 296z"/></svg></i><span>CU Website</span></a></li>
+            <li><a href="https://www.facebook.com/ictcu/" target="_blank" rel="noopener noreferrer"><i class="sq fb"><svg viewBox="0 0 640 640" aria-hidden="true" focusable="false"><path d="M576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 440 146.7 540.8 258.2 568.5L258.2 398.2L205.4 398.2L205.4 320L258.2 320L258.2 286.3C258.2 199.2 297.6 158.8 383.2 158.8C399.4 158.8 427.4 162 438.9 165.2L438.9 236C432.9 235.4 422.4 235 409.3 235C367.3 235 351.1 250.9 351.1 292.2L351.1 320L434.7 320L420.3 398.2L351 398.2L351 574.1C477.8 558.8 576 450.9 576 320z"/></svg></i><span>CU Facebook</span></a></li>
+            <li><a href="https://www.facebook.com/IEEESBCU/" target="_blank" rel="noopener noreferrer"><i class="sq fb"><svg viewBox="0 0 640 640" aria-hidden="true" focusable="false"><path d="M576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 440 146.7 540.8 258.2 568.5L258.2 398.2L205.4 398.2L205.4 320L258.2 320L258.2 286.3C258.2 199.2 297.6 158.8 383.2 158.8C399.4 158.8 427.4 162 438.9 165.2L438.9 236C432.9 235.4 422.4 235 409.3 235C367.3 235 351.1 250.9 351.1 292.2L351.1 320L434.7 320L420.3 398.2L351 398.2L351 574.1C477.8 558.8 576 450.9 576 320z"/></svg></i><span>IEEE CU</span></a></li>
+            <li><a href="https://www.facebook.com/curiorg/" target="_blank" rel="noopener noreferrer"><i class="sq fb"><svg viewBox="0 0 640 640" aria-hidden="true" focusable="false"><path d="M576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 440 146.7 540.8 258.2 568.5L258.2 398.2L205.4 398.2L205.4 320L258.2 320L258.2 286.3C258.2 199.2 297.6 158.8 383.2 158.8C399.4 158.8 427.4 162 438.9 165.2L438.9 236C432.9 235.4 422.4 235 409.3 235C367.3 235 351.1 250.9 351.1 292.2L351.1 320L434.7 320L420.3 398.2L351 398.2L351 574.1C477.8 558.8 576 450.9 576 320z"/></svg></i><span>CURI</span></a></li>
+            <li><a href="https://www.facebook.com/fablabcu" target="_blank" rel="noopener noreferrer"><i class="sq fb"><svg viewBox="0 0 640 640" aria-hidden="true" focusable="false"><path d="M576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 440 146.7 540.8 258.2 568.5L258.2 398.2L205.4 398.2L205.4 320L258.2 320L258.2 286.3C258.2 199.2 297.6 158.8 383.2 158.8C399.4 158.8 427.4 162 438.9 165.2L438.9 236C432.9 235.4 422.4 235 409.3 235C367.3 235 351.1 250.9 351.1 292.2L351.1 320L434.7 320L420.3 398.2L351 398.2L351 574.1C477.8 558.8 576 450.9 576 320z"/></svg></i><span>FABLAB CU</span></a></li>
+          </ul>
+        </div>
       </div>
       <div>
-        <h3>Links</h3>
-        <ul>
-          <li><a href="https://cu.ac.bd" target="_blank" rel="noopener">University of Chittagong</a></li>
-          <li><a href="https://cu.ac.bd/eee/" target="_blank" rel="noopener">Department page on cu.ac.bd</a></li>
-          <li><a href="#enter">Sign in</a></li>
-          <li><a href="#enter" onclick="openRegister()">Register</a></li>
+        <h3>Useful links</h3>
+        <ul class="bullets">
+          <li><a href="https://cu.ac.bd/notice-board/" target="_blank" rel="noopener noreferrer">Notice Board</a></li>
+          <li><a href="https://cu.ac.bd/forms-downloads/" target="_blank" rel="noopener noreferrer">Forms &amp; Downloads</a></li>
+          <li><a href="https://ictcell.cu.ac.bd/services/" target="_blank" rel="noopener noreferrer">Online and Other Services</a></li>
+          <li><a href="https://ictcell.cu.ac.bd/" target="_blank" rel="noopener noreferrer">ICT Cell</a></li>
+          <li><a href="https://cu.ac.bd/iqac/" target="_blank" rel="noopener noreferrer">Institutional Quality Assurance Cell (IQAC)</a></li>
         </ul>
       </div>
       <div id="faq">
@@ -558,10 +612,16 @@ body{animation:pageIn .5s ease backwards}
         <details><summary>Why does it ask for my parents' names?</summary>
           <p>To check you are the person the roll number belongs to. They're compared with the office's own record, in English or Bangla, and never shown to anyone else.</p></details>
         <details><summary>I forgot my password.</summary>
-          <p>Password reset isn't built yet. For now, ask the academic office.</p></details>
+          <p>Click "Forgot your password?" under the sign-in button. We email a 6-digit code to your account's email; type it in and choose a new password. Any device that was still signed in is signed out.</p></details>
       </div>
     </div>
     <div class="legal">Prototype. Marks, attendance and achievements shown here are sample data, not real records.</div>
+  </div>
+  <div class="copybar">
+    <div class="wrap">
+      <span>Copyright © 2026 EEE Records · CSE 518 course project, University of Chittagong. Not an official university website.</span>
+      <span>Developed by Nabiha Nowrin, Sabrin Sultana and Syeda Muntaha Najah</span>
+    </div>
   </div>
 </footer>
 
@@ -718,6 +778,7 @@ function pickRole(role, btn){
   document.querySelectorAll('.roles button').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById('handoff').classList.add('hide');
+  document.getElementById('resetPane').classList.add('hide');
   const signedIn = !document.getElementById('already').classList.contains('hide');
   document.getElementById('studentPane').classList.toggle('hide', role !== 'student' || signedIn);
   document.getElementById('adminPane').classList.toggle('hide', role !== 'admin' || signedIn);
@@ -763,7 +824,7 @@ function keep(tok, remember, role, msg){
 
 /* the browser only allows a new tab during a real click, so we ask for one */
 function showHandoff(role){
-  ['studentPane','adminPane','teacherPane','already'].forEach(id =>
+  ['studentPane','adminPane','teacherPane','already','resetPane'].forEach(id =>
     document.getElementById(id).classList.add('hide'));
   const box = document.getElementById('handoff');
   box.classList.remove('hide');
@@ -790,12 +851,55 @@ function freeThisTab(){
   localStorage.removeItem(KEY);
   document.getElementById('handoff').classList.add('hide');
   document.getElementById('already').classList.add('hide');
+  document.getElementById('resetPane').classList.add('hide');
   document.getElementById('adminPane').classList.add('hide');
   document.getElementById('teacherPane').classList.add('hide');
   document.getElementById('studentPane').classList.remove('hide');
   document.querySelectorAll('.roles button').forEach((b, i) => b.classList.toggle('on', i === 0));
   ['inPw','tcPw','adPw'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   ['inMsg','tcMsg','adMsg'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
+}
+
+/* ---------- forgot password ---------- */
+let resetFrom = 'studentPane';
+function openReset(paneId, emailId){
+  resetFrom = paneId;
+  ['studentPane','adminPane','teacherPane'].forEach(id => document.getElementById(id).classList.add('hide'));
+  document.getElementById('resetPane').classList.remove('hide');
+  document.getElementById('rsEmail').value = document.getElementById(emailId).value.trim();
+  resetAgain();
+}
+function closeReset(){
+  document.getElementById('resetPane').classList.add('hide');
+  document.getElementById(resetFrom).classList.remove('hide');
+}
+function resetAgain(){
+  document.getElementById('rs1').classList.remove('hide');
+  document.getElementById('rs2').classList.add('hide');
+  ['rsCode','rsPw','rsPw2'].forEach(id => document.getElementById(id).value = '');
+  ['rs1Msg','rs2Msg'].forEach(id => document.getElementById(id).textContent = '');
+}
+async function resetStart(){
+  const msg = document.getElementById('rs1Msg');
+  msg.textContent = '';
+  const email = document.getElementById('rsEmail').value.trim().toLowerCase();
+  const res = await post('/api/password/start', {email});
+  if (!res.ok){ msg.textContent = res.why; return; }
+  document.getElementById('rsSent').textContent = email;
+  document.getElementById('rs1').classList.add('hide');
+  document.getElementById('rs2').classList.remove('hide');
+}
+async function resetFinish(){
+  const msg = document.getElementById('rs2Msg');
+  msg.textContent = '';
+  const pw = document.getElementById('rsPw').value;
+  if (pw !== document.getElementById('rsPw2').value){ msg.textContent = "The two passwords don't match."; return; }
+  const remember = document.getElementById('rsRemember').checked;
+  const res = await post('/api/password/finish', {
+    email: document.getElementById('rsSent').textContent,
+    code: document.getElementById('rsCode').value, password: pw, remember});
+  if (!res.ok){ msg.textContent = res.why; return; }
+  keep(res.token, remember, res.role, msg);
 }
 
 async function signIn(){

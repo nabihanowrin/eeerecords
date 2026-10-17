@@ -365,3 +365,76 @@ def who(token):
 def sign_out(token):
     if token:
         _run("DELETE FROM sessions WHERE token_hash=?", (sha(token),))
+
+
+# ------------------------------------------------------------------
+# forgotten password: a code sent to the inbox proves it's you
+# ------------------------------------------------------------------
+def reset_start(email):
+    """
+    Emails a 6-digit reset code. Returns "sent" or the reason it couldn't.
+
+    The code is NEVER shown on the page, unlike the sign-up code: anyone
+    could type someone else's email here, so showing the code would let
+    them take over that account.
+    """
+    email = (email or "").strip().lower()
+    if "@" not in email:
+        raise Refused("That doesn't look like an email address.")
+    key = "reset:" + email
+    check_lock(key)
+    record_failure(key)            # counts requests: the 5th locks for a while
+
+    if not _one("SELECT 1 FROM accounts WHERE email=?", (email,)):
+        raise Refused("There is no account with this email. Check it, or register instead.")
+
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    expires = (_now() + dt.timedelta(minutes=CODE_MINUTES)).isoformat()
+    _run("INSERT OR REPLACE INTO pending VALUES (?,?,?,0)", (key, sha(code), expires))
+
+    import mailer
+    status, _ = mailer.send(email, "Your EEE Records password reset code",
+                            f"Your code is {code}\n\nIt works for {CODE_MINUTES} minutes. "
+                            "If you didn't ask to reset your password, ignore this email — "
+                            "your password stays the same.")
+    if status != "sent":
+        _run("DELETE FROM pending WHERE email=?", (key,))
+        print(f"\n  >>> Password reset for {email} could not be emailed ({status}).\n", flush=True)
+        raise Refused("We couldn't email a code to this address right now. "
+                      "Ask the academic office to help you reset your password.")
+    return status
+
+
+def reset_finish(email, code, password):
+    """Checks the code, sets the new password, and signs out every old session."""
+    email = (email or "").strip().lower()
+    key = "reset:" + email
+    row = _one("SELECT code_hash, expires, tries FROM pending WHERE email=?", (key,))
+    if not row:
+        raise Refused("Start again — no code was sent to this email.")
+    if dt.datetime.fromisoformat(row[1]) < _now():
+        _run("DELETE FROM pending WHERE email=?", (key,))
+        raise Refused("That code has expired. Start again for a new one.")
+    if not hmac.compare_digest(sha((code or "").strip()), row[0]):
+        tries = row[2] + 1
+        if tries >= MAX_TRIES:
+            _run("DELETE FROM pending WHERE email=?", (key,))
+            raise Refused("Too many wrong codes. Start again for a new one.")
+        _run("UPDATE pending SET tries=? WHERE email=?", (tries, key))
+        raise Refused(f"Wrong code. {MAX_TRIES - tries} tr{'ies' if MAX_TRIES - tries != 1 else 'y'} left.")
+    if len(password or "") < 8:
+        raise Refused("Choose a password of at least 8 characters.")
+
+    salt = secrets.token_hex(16)
+    _run("UPDATE accounts SET salt=?, pw_hash=? WHERE email=?",
+         (salt, hash_password(password, salt), email))
+    _run("DELETE FROM pending WHERE email=?", (key,))
+    _run("DELETE FROM sessions WHERE email=?", (email,))   # old sign-ins stop working
+    clear_failures(key)
+    clear_failures("signin:" + email)                    # a locked-out user can get back in
+
+    import mailer
+    mailer.send_later(email, "Your EEE Records password was changed",
+                      "The password for your EEE Records account was just changed.\n\n"
+                      "If this wasn't you, tell the academic office straight away.")
+    return email

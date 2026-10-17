@@ -1117,9 +1117,17 @@ class Handler(SimpleHTTPRequestHandler):
 
         # ---- the only POSTs allowed without being signed in ----
         if url.path in ("/api/register/start", "/api/register/finish", "/api/signin",
-                        "/api/register/staff-start", "/api/register/staff-finish"):
+                        "/api/register/staff-start", "/api/register/staff-finish",
+                        "/api/password/start", "/api/password/finish"):
             body = json.loads(self.rfile.read(length) or "{}")
             try:
+                if url.path == "/api/password/start":
+                    auth.reset_start(body.get("email"))
+                    return self.reply({"ok": True})
+                if url.path == "/api/password/finish":
+                    email = auth.reset_finish(body.get("email"), body.get("code"), body.get("password"))
+                    token, role = auth.sign_in(email, body.get("password"), body.get("remember"))
+                    return self.reply({"ok": True, "token": token, "role": role})
                 if url.path == "/api/register/staff-start":
                     status, shown = auth.staff_register_start(body.get("email"))
                     out = {"ok": True, "emailed": status == "sent"}
